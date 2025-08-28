@@ -1,13 +1,7 @@
 "use server";
 
-import { indicateToolUse } from "@/ai/flows/indicate-tool-use";
-import { respondToImageAndText } from "@/ai/flows/respond-to-image-and-text";
+import { sendToAgent, createSimpleAgentInput } from "@/ai/flows/agent-api";
 import { z } from "zod";
-
-const fileToGenerativePart = async (file: File) => {
-  const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-  return `data:${file.type};base64,${base64}`;
-};
 
 const sendMessageActionSchema = z.object({
   prompt: z.string(),
@@ -33,19 +27,27 @@ export async function sendMessageAction(formData: FormData) {
   const { prompt, image } = validatedData.data;
 
   try {
-    if (image && image.size > 0) {
-      const photoDataUri = await fileToGenerativePart(image);
-      const result = await respondToImageAndText({
-        question: prompt,
-        photoDataUri: photoDataUri,
-      });
-      return { response: result.answer };
-    } else {
-      const result = await indicateToolUse({ query: prompt });
-      return { response: result.response };
-    }
+    // Create the agent input with the new API structure
+    const agentInput = await createSimpleAgentInput(
+      prompt,
+      image && image.size > 0 ? image : undefined,
+      {
+        // You can add customer_id, session_id, etc. here if needed
+        // customer_id: "some-customer-id",
+        // session_id: "some-session-id",
+        metadata: {
+          timestamp: new Date().toISOString(),
+          source: "chat-ui",
+        },
+      }
+    );
+
+    const result = await sendToAgent(agentInput);
+    
+    return { response: result.response };
   } catch (e) {
     console.error(e);
-    return { failure: { server: "Could not get a response from the AI." } };
+    const errorMessage = e instanceof Error ? e.message : "Could not get a response from the AI.";
+    return { failure: { server: errorMessage } };
   }
 }

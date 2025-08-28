@@ -1,5 +1,6 @@
-import { ChatUI } from "@/components/chat-ui";
+
+import Landing from "./landing";
 
 export default function Home() {
-  return <ChatUI />;
+  return <Landing />;
 }

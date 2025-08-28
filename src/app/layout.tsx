@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'EchoAI',
-  description: 'An AI chat application',
+  title: 'CryptoTrade - Advanced Crypto Trading Platform',
+  description: 'Experience seamless cryptocurrency trading with advanced features, real-time analytics, and institutional-grade security.',
 };
 
 export default function RootLayout({
