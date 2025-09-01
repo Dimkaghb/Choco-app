@@ -5,6 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Paperclip, Send, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import Image from 'next/image';
+import { FileAttachment } from '@/lib/types';
+import { FileAttachmentList } from './file-attachment';
 
 interface ChatInputProps {
   onSubmit: (formData: FormData) => Promise<void>;
@@ -15,17 +17,68 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<FileAttachment[]>([]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setImagePreview(URL.createObjectURL(file));
-    } else {
-      setImagePreview(null);
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const newAttachments: FileAttachment[] = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const url = URL.createObjectURL(file);
+        const isImage = file.type.startsWith('image/');
+        
+        const attachment: FileAttachment = {
+          id: crypto.randomUUID(),
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          url,
+          isImage
+        };
+        
+        newAttachments.push(attachment);
+        
+        // Maintain backward compatibility with image preview
+        if (isImage && !imagePreview) {
+          setImagePreview(url);
+        }
+      }
+      
+      setAttachments(prev => [...prev, ...newAttachments]);
     }
   };
 
-  const clearImage = () => {
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => {
+      const updated = prev.filter(att => att.id !== id);
+      const removedAttachment = prev.find(att => att.id === id);
+      
+      // Clean up object URL
+      if (removedAttachment?.url) {
+        URL.revokeObjectURL(removedAttachment.url);
+      }
+      
+      // Update image preview if removed attachment was the preview
+      if (removedAttachment?.url === imagePreview) {
+        const nextImageAttachment = updated.find(att => att.isImage);
+        setImagePreview(nextImageAttachment?.url || null);
+      }
+      
+      return updated;
+    });
+  };
+
+  const clearAllAttachments = () => {
+    // Clean up all object URLs
+    attachments.forEach(att => {
+      if (att.url) {
+        URL.revokeObjectURL(att.url);
+      }
+    });
+    
+    setAttachments([]);
     setImagePreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -39,33 +92,53 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
     const formData = new FormData(e.currentTarget);
     const prompt = formData.get('prompt') as string;
 
-    if (!prompt.trim() && !imagePreview) return;
+    if (!prompt.trim() && attachments.length === 0) return;
+
+    // Add all files to FormData with actual File objects from input
+    const fileInput = fileInputRef.current;
+    if (fileInput?.files) {
+      for (let i = 0; i < fileInput.files.length; i++) {
+        formData.append('files', fileInput.files[i]);
+      }
+    }
 
     await onSubmit(formData);
     formRef.current?.reset();
-    clearImage();
+    clearAllAttachments();
   };
 
   return (
     <div className="p-4 border-t border-border bg-background">
       <form ref={formRef} onSubmit={handleSubmit} className="relative">
-        {imagePreview && (
-          <div className="relative mb-2 w-32 h-24 rounded-md overflow-hidden border">
-            <Image src={imagePreview} alt="Image preview" fill className="object-cover" data-ai-hint="image preview" />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute top-1 right-1 h-6 w-6"
-              onClick={clearImage}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        {/* File attachments preview */}
+        {attachments.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-muted-foreground">
+                Прикрепленные файлы ({attachments.length})
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearAllAttachments}
+                className="text-xs"
+              >
+                Очистить все
+              </Button>
+            </div>
+            <FileAttachmentList
+              attachments={attachments}
+              onRemove={removeAttachment}
+              isEditable={true}
+              size="sm"
+              maxDisplay={6}
+            />
           </div>
         )}
         <Textarea
           name="prompt"
-          placeholder="Ask EchoAI..."
+          placeholder="Спросите ChocoAnalyze AI..."
           className="pr-28 min-h-[48px] resize-none"
           rows={1}
           onKeyDown={(e) => {
@@ -79,19 +152,22 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
           <input
             type="file"
-            name="image"
+            name="files"
             ref={fileInputRef}
             className="hidden"
-            accept="image/*"
+            multiple
             onChange={handleFileChange}
             disabled={isLoading}
           />
+          {/* Hidden input for backward compatibility */}
+          <input type="hidden" name="image" />
           <Button
             type="button"
             variant="ghost"
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
+            title="Прикрепить файлы"
           >
             <Paperclip className="w-5 h-5" />
           </Button>

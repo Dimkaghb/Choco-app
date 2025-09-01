@@ -24,26 +24,26 @@ import { Card } from "@/components/ui/card";
 // Features configuration
 const features = [
   {
-    title: "Advanced Trading Interface",
-    description: "Professional-grade trading tools with real-time market data and advanced charting capabilities.",
+    title: "Продвинутый аналитический интерфейс",
+    description: "Профессиональные инструменты анализа данных с визуализацией в реальном времени и расширенными возможностями построения графиков.",
     icon: <BarChart3 className="w-6 h-6" />,
     image: "/lovable-uploads/86329743-ee49-4f2e-96f7-50508436273d.png"
   },
   {
-    title: "Portfolio Management",
-    description: "Track your investments and monitor your gains with our comprehensive portfolio dashboard.",
+    title: "Управление проектами",
+    description: "Отслеживайте свои аналитические проекты и контролируйте прогресс с помощью нашей комплексной панели управления.",
     icon: <Wallet className="w-6 h-6" />,
     image: "/lovable-uploads/7335619d-58a9-41ad-a233-f7826f56f3e9.png"
   },
   {
-    title: "Security & Verification",
-    description: "Industry-leading security measures with KYC verification process to protect your assets.",
+    title: "Безопасность и верификация",
+    description: "Ведущие в отрасли меры безопасности с процессом верификации для защиты ваших данных и аналитических проектов.",
     icon: <ShieldCheck className="w-6 h-6" />,
     image: "/lovable-uploads/b6436838-5c1a-419a-9cdc-1f9867df073d.png"
   },
   {
-    title: "Performance Analytics",
-    description: "Detailed analytics and credit scoring system to help you make informed decisions.",
+    title: "Аналитика производительности",
+    description: "Детальная аналитика и система оценки качества для принятия обоснованных решений на основе данных.",
     icon: <ArrowUpDown className="w-6 h-6" />,
     image: "/lovable-uploads/79f2b901-8a4e-42a5-939f-fae0828e0aef.png"
   }
@@ -52,40 +52,40 @@ const features = [
 // Testimonials data
 const testimonials = [
   {
-    name: "Michael Chen",
-    role: "Professional Trader",
+    name: "Михаил Чен",
+    role: "Старший аналитик данных",
     image: "https://avatars.githubusercontent.com/u/1234567?v=4",
-    content: "The real-time market data and advanced trading features have significantly improved my trading performance. The platform's security measures give me peace of mind."
+    content: "Анализ данных в реальном времени и продвинутые аналитические функции значительно улучшили качество наших отчетов. Меры безопасности платформы дают мне спокойствие."
   },
   {
-    name: "Sarah Johnson",
-    role: "Crypto Fund Manager",
+    name: "Сара Джонсон",
+    role: "Руководитель отдела аналитики",
     image: "https://avatars.githubusercontent.com/u/2345678?v=4",
-    content: "CryptoTrade's institutional-grade tools have transformed our trading strategy. The API integration and automated features have saved us countless hours."
+    content: "Инструменты корпоративного уровня ChocoAnalyze изменили нашу аналитическую стратегию. Интеграция API и автоматизированные функции сэкономили нам бесчисленные часы."
   },
   {
-    name: "David Wilson",
-    role: "Early Crypto Investor",
+    name: "Дэвид Уилсон",
+    role: "Аналитик-исследователь",
     image: "https://avatars.githubusercontent.com/u/3456789?v=4",
-    content: "The customer support is exceptional, and the platform's intuitive design made getting started with crypto trading seamless. A game-changer for both beginners and pros."
+    content: "Поддержка клиентов исключительная, а интуитивный дизайн платформы сделал начало работы с анализом данных простым. Настоящий прорыв как для новичков, так и для профессионалов."
   },
   {
-    name: "Emily Zhang",
-    role: "DeFi Developer",
+    name: "Эмили Чжан",
+    role: "Data Scientist",
     image: "https://avatars.githubusercontent.com/u/4567890?v=4",
-    content: "We've seen remarkable improvements in our trading efficiency since switching to CryptoTrade. The smart order routing and liquidity aggregation are particularly impressive."
+    content: "Мы видим замечательные улучшения в эффективности анализа с момента перехода на ChocoAnalyze. Умная обработка данных и визуализация особенно впечатляют."
   },
   {
-    name: "James Rodriguez",
-    role: "Crypto Security Expert",
+    name: "Хэймс Родригес",
+    role: "Эксперт по безопасности данных",
     image: "https://avatars.githubusercontent.com/u/5678901?v=4",
-    content: "The security features are robust and the regular updates keep us ahead of emerging threats. It's exactly what the crypto industry needed."
+    content: "Функции безопасности надежны, а регулярные обновления держат нас впереди новых угроз. Это именно то, что нужно индустрии анализа данных."
   },
   {
-    name: "Lisa Thompson",
-    role: "Portfolio Manager",
+    name: "Лиза Томпсон",
+    role: "Менеджер по аналитике",
     image: "https://avatars.githubusercontent.com/u/6789012?v=4",
-    content: "The platform's ability to handle complex trading strategies while maintaining simplicity in its interface is remarkable. It's been invaluable for our portfolio management."
+    content: "Способность платформы обрабатывать сложные аналитические задачи, сохраняя простоту интерфейса, замечательна. Это бесценно для управления нашими проектами."
   }
 ];
 
@@ -145,9 +145,9 @@ const Navigation = ({ onStartTrading }: { onStartTrading: () => void }) => {
   };
 
   const navItems = [
-    { name: "Features", href: "#features", onClick: () => scrollToSection('features') },
-    { name: "Prices", href: "#pricing", onClick: () => scrollToSection('pricing') },
-    { name: "Testimonials", href: "#testimonials", onClick: () => scrollToSection('testimonials') },
+    { name: "Функции", href: "#features", onClick: () => scrollToSection('features') },
+    { name: "Цены", href: "#pricing", onClick: () => scrollToSection('pricing') },
+    { name: "Отзывы", href: "#testimonials", onClick: () => scrollToSection('testimonials') },
   ];
 
   return (
@@ -162,7 +162,7 @@ const Navigation = ({ onStartTrading }: { onStartTrading: () => void }) => {
         <nav className="flex items-center justify-between h-full">
           <div className="flex items-center gap-2">
             <Command className="w-5 h-5 text-primary" />
-            <span className="font-bold text-base">CryptoTrade</span>
+            <span className="font-bold text-base">Choco<span className="text-gradient">Analyze</span></span>
           </div>
 
           {/* Desktop Navigation */}
@@ -187,7 +187,7 @@ const Navigation = ({ onStartTrading }: { onStartTrading: () => void }) => {
               size="sm"
               className="button-gradient"
             >
-              Start Trading
+              Начать анализ
             </Button>
           </div>
 
@@ -224,7 +224,7 @@ const Navigation = ({ onStartTrading }: { onStartTrading: () => void }) => {
                     }}
                     className="button-gradient mt-4"
                   >
-                    Start Trading
+                    Начать анализ
                   </Button>
                 </div>
               </SheetContent>
@@ -363,12 +363,12 @@ const FeaturesSection = () => {
       {/* Header Section */}
       <div className="max-w-2xl mx-auto text-center mb-20">
         <h2 className="text-5xl md:text-6xl font-normal mb-6 tracking-tight">
-          Advanced Trading
+          Продвинутые аналитические
           <br />
-          <span className="text-gradient font-medium">Features & Tools</span>
+          <span className="text-gradient font-medium">функции и инструменты</span>
         </h2>
         <p className="text-lg md:text-xl text-gray-400">
-          Experience professional-grade trading tools and features designed for both novice and experienced crypto traders.
+          Опыт работы с профессиональными инструментами анализа данных и функциями, разработанными как для новичков, так и для опытных аналитиков.
         </p>
       </div>
 
@@ -435,13 +435,13 @@ const PricingTier = ({
     <div className="relative h-full p-6 flex flex-col">
       {isPopular && (
         <span className="text-xs font-medium bg-primary/10 text-primary rounded-full px-3 py-1 w-fit mb-4">
-          Most Popular
+          Самый популярный
         </span>
       )}
       <h3 className="text-xl font-medium mb-2">{name}</h3>
       <div className="mb-4">
         <span className="text-4xl font-bold">{price}</span>
-        {price !== "Custom" && <span className="text-gray-400">/month</span>}
+        {price !== "По запросу" && price !== "Бесплатно" && <span className="text-gray-400">/месяц</span>}
       </div>
       <p className="text-gray-400 mb-6">{description}</p>
       <ul className="space-y-3 mb-8 flex-grow">
@@ -453,7 +453,7 @@ const PricingTier = ({
         ))}
       </ul>
       <Button className="button-gradient w-full" onClick={onStartTrading}>
-        Start Trading
+        Начать анализ
       </Button>
     </div>
   </CardSpotlight>
@@ -470,8 +470,8 @@ const PricingSection = ({ onStartTrading }: { onStartTrading: () => void }) => {
           transition={{ duration: 0.5 }}
           className="text-5xl md:text-6xl font-normal mb-6"
         >
-          Choose Your{" "}
-          <span className="text-gradient font-medium">Trading Plan</span>
+          Выберите свой{" "}
+          <span className="text-gradient font-medium">аналитический план</span>
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -479,48 +479,48 @@ const PricingSection = ({ onStartTrading }: { onStartTrading: () => void }) => {
           transition={{ delay: 0.1, duration: 0.5 }}
           className="text-lg text-gray-400"
         >
-          Select the perfect trading plan with advanced features and competitive fees
+          Выберите идеальный аналитический план с продвинутыми функциями и конкурентными ценами
         </motion.p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         <PricingTier
-          name="Basic Trader"
-          price="$0"
-          description="Perfect for beginners starting their crypto journey"
+          name="Начинающий аналитик"
+          price="Бесплатно"
+          description="Идеально для новичков, начинающих свой путь в анализе данных"
           features={[
-            "Basic spot trading",
-            "Market & limit orders",
-            "Basic market analysis",
-            "Email support"
+            "Базовый анализ данных",
+            "Простые отчеты и графики",
+            "Базовые инструменты визуализации",
+            "Поддержка по электронной почте"
           ]}
           onStartTrading={onStartTrading}
         />
         <PricingTier
-          name="Pro Trader"
+          name="Про аналитик"
           price="$29"
-          description="Advanced features for serious traders"
+          description="Продвинутые функции для серьезных аналитиков"
           features={[
-            "Advanced trading tools",
-            "Margin trading up to 10x",
-            "Advanced technical analysis",
-            "Priority support",
-            "API access"
+            "Продвинутые инструменты анализа",
+            "Машинное обучение и ИИ",
+            "Продвинутая визуализация данных",
+            "Приоритетная поддержка",
+            "Доступ к API"
           ]}
           isPopular
           onStartTrading={onStartTrading}
         />
         <PricingTier
-          name="Institutional"
-          price="Custom"
-          description="Enterprise-grade solutions for institutions"
+          name="Корпоративный"
+          price="По запросу"
+          description="Корпоративные решения для крупных компаний"
           features={[
-            "Custom trading solutions",
-            "Unlimited trading volume",
-            "OTC desk access",
-            "Dedicated account manager",
-            "Custom API integration",
-            "24/7 priority support"
+            "Индивидуальные аналитические решения",
+            "Неограниченный объем данных",
+            "Доступ к премиум функциям",
+            "Персональный менеджер",
+            "Индивидуальная интеграция API",
+            "Приоритетная поддержка 24/7"
           ]}
           onStartTrading={onStartTrading}
         />
@@ -541,9 +541,9 @@ const TestimonialsSection = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl font-normal mb-4">Trusted by Traders</h2>
+          <h2 className="text-5xl font-normal mb-4">Доверяют аналитики</h2>
           <p className="text-muted-foreground text-lg">
-            Join thousands of satisfied traders on CryptoTrade
+            Присоединяйтесь к тысячам довольных аналитиков на ChocoAnalyze
           </p>
         </motion.div>
 
@@ -604,7 +604,7 @@ const Footer = () => {
             <div className="space-y-4">
               <h3 className="font-medium text-lg">CryptoTrade</h3>
               <p className="text-sm text-muted-foreground">
-                Empowering traders with advanced crypto trading solutions.
+                Предоставляем аналитикам продвинутые решения для анализа данных.
               </p>
               <div className="flex space-x-4">
                 <Button variant="ghost" size="icon">
@@ -617,48 +617,48 @@ const Footer = () => {
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-medium">Trading</h4>
+              <h4 className="font-medium">Аналитика</h4>
               <ul className="space-y-2">
                 <li>
                   <a href="#features" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Markets
+                    Инструменты
                   </a>
                 </li>
                 <li>
                   <a href="#pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Trading Fees
+                    Тарифы
                   </a>
                 </li>
               </ul>
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-medium">Resources</h4>
+              <h4 className="font-medium">Ресурсы</h4>
               <ul className="space-y-2">
                 <li>
                   <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Trading Guide
+                    Руководство по анализу
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Market Analysis
+                    Примеры отчетов
                   </a>
                 </li>
               </ul>
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-medium">Legal</h4>
+              <h4 className="font-medium">Правовая информация</h4>
               <ul className="space-y-2">
                 <li>
                   <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Privacy Policy
+                    Политика конфиденциальности
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Terms of Service
+                    Условия обслуживания
                   </a>
                 </li>
               </ul>
@@ -667,7 +667,7 @@ const Footer = () => {
 
           <div className="mt-8 pt-8 border-t border-white/10">
             <p className="text-sm text-muted-foreground text-center">
-              © {new Date().getFullYear()} Rezaul Arif. All rights reserved.
+              © {new Date().getFullYear()} Rezaul Arif. Все права защищены.
             </p>
           </div>
         </div>
@@ -709,7 +709,7 @@ const Landing = () => {
           >
             <span className="text-sm font-medium">
               <Command className="w-4 h-4 inline-block mr-2" />
-              Next-gen crypto trading platform
+              Платформа анализа данных нового поколения
             </span>
           </motion.div>
         </div>
@@ -717,11 +717,11 @@ const Landing = () => {
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <h1 className="text-5xl md:text-7xl font-normal mb-4 tracking-tight">
             <span className="text-gray-200">
-              The Future of
+              Будущее
             </span>
             <br />
             <span className="text-white font-medium">
-              Crypto Trading
+              Анализа Данных
             </span>
           </h1>
           
@@ -731,8 +731,8 @@ const Landing = () => {
             transition={{ delay: 0.4 }}
             className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto"
           >
-            Experience seamless cryptocurrency trading with advanced features, real-time analytics, and institutional-grade security.{" "}
-            <span className="text-white">Start trading in minutes.</span>
+            Опыт беспрепятственного анализа данных с продвинутыми функциями, аналитикой в реальном времени и безопасностью институционального уровня.{" "}
+            <span className="text-white">Начните анализировать за минуты.</span>
           </motion.p>
           
           <motion.div
@@ -742,10 +742,10 @@ const Landing = () => {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
             <Button size="lg" className="button-gradient" onClick={handleStartTrading}>
-              Start Trading Now
+              Начать анализ
             </Button>
             <Button size="lg" variant="link" className="text-white">
-              View Markets <ArrowRight className="ml-2 w-4 h-4" />
+              Посмотреть отчеты <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </motion.div>
         </div>
@@ -801,13 +801,13 @@ const Landing = () => {
           className="bg-[#0A0A0A]/80 backdrop-blur-lg border border-white/10 rounded-2xl p-8 md:p-12 text-center relative z-10"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to start trading?
+            Готовы начать анализ?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of traders who have already discovered the power of our platform.
+            Присоединяйтесь к тысячам аналитиков, которые уже открыли для себя мощь нашей платформы.
           </p>
           <Button size="lg" className="button-gradient" onClick={handleStartTrading}>
-            Create Account
+            Создать аккаунт
             <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
         </motion.div>

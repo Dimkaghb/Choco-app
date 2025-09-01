@@ -1,0 +1,9 @@
+@echo off
+echo Starting Choco Data Processing API Backend...
+echo.
+echo Installing dependencies...
+pip install -r requirements.txt
+echo.
+echo Starting server...
+python start.py
+pause

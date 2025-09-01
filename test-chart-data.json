@@ -1,0 +1,29 @@
+{
+  "chart": {
+    "data": [
+      {
+        "label": "Kazakhstan",
+        "value": 1000
+      },
+      {
+        "label": "Russia",
+        "value": 2000
+      },
+      {
+        "label": "USA",
+        "value": 3000
+      },
+      {
+        "label": "China",
+        "value": 2500
+      },
+      {
+        "label": "Germany",
+        "value": 1800
+      }
+    ],
+    "type": "bar",
+    "title": "Country Statistics"
+  },
+  "message": "Here is the chart showing country statistics based on your request."
+}

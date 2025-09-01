@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'CryptoTrade - Advanced Crypto Trading Platform',
-  description: 'Experience seamless cryptocurrency trading with advanced features, real-time analytics, and institutional-grade security.',
+  title: 'ChocoAnalyze - Продвинутая платформа для анализа данных',
+  description: 'Опыт беспрепятственного анализа данных с продвинутыми функциями, аналитикой в реальном времени и безопасностью институционального уровня.',
 };
 
 export default function RootLayout({

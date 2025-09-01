@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // experimental: {
+  //   // Отключаем символические ссылки для решения проблем с кириллическими путями
+  //   turbotrace: {
+  //     logLevel: 'error'
+  //   }
+  // },
+  // // Отключаем оптимизации, которые могут вызывать проблемы с путями
+  // swcMinify: false,
   images: {
     remotePatterns: [
       {

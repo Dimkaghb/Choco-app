@@ -11,8 +11,8 @@ export function ChatHeader() {
           <AvatarFallback>AI</AvatarFallback>
         </Avatar>
         <div>
-          <p className="font-bold text-lg font-headline">EchoAI Assistant</p>
-          <p className="text-sm text-muted-foreground">Online</p>
+          <p className="font-bold text-lg font-headline">ChocoAnalyze AI Помощник</p>
+          <p className="text-sm text-muted-foreground">Онлайн</p>
         </div>
       </div>
       <Button variant="ghost" size="icon">

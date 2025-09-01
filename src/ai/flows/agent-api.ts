@@ -81,9 +81,69 @@ export async function sendToAgent(input: SendToAgentInput): Promise<SendToAgentO
 
     const data = await response.json();
     
-    // Assuming the API returns a response in a 'response' or 'message' field
-    // Adjust this based on your actual API response structure
-    const agentResponse = data.response || data.message || data.reply || JSON.stringify(data);
+    // Debug: Log the actual API response structure
+    console.log('AI API Response:', JSON.stringify(data, null, 2));
+    
+    // Return the full JSON response for processing in chat-ui.tsx
+    // This allows the UI to handle both text content and visualization data
+    const agentResponse = JSON.stringify(data);
+
+    return {
+      response: agentResponse,
+    };
+  } catch (error) {
+    console.error('Error communicating with AI agent API:', error);
+    
+    // Re-throw with a user-friendly message
+    if (error instanceof Error) {
+      throw new Error(`Failed to get response from AI agent: ${error.message}`);
+    } else {
+      throw new Error('Failed to get response from AI agent: Unknown error occurred');
+    }
+  }
+}
+
+/**
+ * Sends a simple text message directly to the AI API without files.
+ * This is optimized for fast responses when no file processing is needed.
+ */
+export async function sendDirectMessage(message: string): Promise<SendToAgentOutput> {
+  const baseUrl = process.env.VITE_API_URL;
+  
+  if (!baseUrl) {
+    throw new Error('VITE_API_URL environment variable is not configured');
+  }
+
+  const apiUrl = `${baseUrl}/agent/run`;
+
+  try {
+    const requestData = {
+      message,
+      execution_mode: 'sync' as const,
+      with_tts: false,
+    };
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    // Debug: Log the actual API response structure
+    console.log('AI API Response (sendToAgent):', JSON.stringify(data, null, 2));
+    
+    // Return the full JSON response for processing in chat-ui.tsx
+    // This allows the UI to handle both text content and visualization data
+    const agentResponse = JSON.stringify(data);
 
     return {
       response: agentResponse,
@@ -164,6 +224,38 @@ export async function createSimpleAgentInput(
   if (imageFile) {
     const attachment = await createAttachmentFromFile(imageFile);
     input.attachments = [attachment];
+  }
+
+  return input;
+}
+
+/**
+ * Helper function to create an API request with a message and multiple file attachments.
+ * This function supports any type of files, not just images.
+ */
+export async function createMultiFileAgentInput(
+  message: string, 
+  files: File[], 
+  options?: {
+    customer_id?: string;
+    session_id?: string;
+    metadata?: Record<string, any>;
+  }
+): Promise<SendToAgentInput> {
+  const input: SendToAgentInput = {
+    message,
+    customer_id: options?.customer_id,
+    session_id: options?.session_id,
+    metadata: options?.metadata,
+    execution_mode: 'sync',
+    with_tts: false,
+  };
+
+  if (files && files.length > 0) {
+    const attachments = await Promise.all(
+      files.map(file => createAttachmentFromFile(file))
+    );
+    input.attachments = attachments;
   }
 
   return input;
