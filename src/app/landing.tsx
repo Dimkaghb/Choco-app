@@ -20,6 +20,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
+import { Auth } from "@/components/auth";
 
 // Features configuration
 const features = [
@@ -679,9 +680,14 @@ const Footer = () => {
 // Main Landing Component
 const Landing = () => {
   const router = useRouter();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const handleStartTrading = () => {
-    router.push('/chat');
+    setIsAuthOpen(true);
+  };
+
+  const handleCloseAuth = () => {
+    setIsAuthOpen(false);
   };
 
   return (
@@ -817,6 +823,9 @@ const Landing = () => {
       <div className="bg-black">
         <Footer />
       </div>
+      
+      {/* Auth Modal */}
+      <Auth isOpen={isAuthOpen} onClose={handleCloseAuth} />
     </div>
   );
 };
