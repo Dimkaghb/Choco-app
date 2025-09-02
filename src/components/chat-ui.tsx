@@ -87,57 +87,77 @@ export function ChatUI() {
     } else {
       // Check if we have data files that need backend processing
       const dataFiles = filesToProcess.filter(file => 
-        !file.type.startsWith('image/') || 
-        file.name.toLowerCase().includes('.csv') ||
-        file.name.toLowerCase().includes('.xlsx') ||
-        file.name.toLowerCase().includes('.xls') ||
-        file.name.toLowerCase().includes('.json') ||
-        file.name.toLowerCase().includes('.txt')
+        file.name.toLowerCase().endsWith('.csv') ||
+        file.name.toLowerCase().endsWith('.xlsx') ||
+        file.name.toLowerCase().endsWith('.xls') ||
+        file.name.toLowerCase().endsWith('.json') ||
+        file.name.toLowerCase().endsWith('.txt') ||
+        file.name.toLowerCase().endsWith('.log') ||
+        file.type === 'text/csv' ||
+        file.type === 'application/json' ||
+        file.type === 'text/plain' ||
+        file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+        file.type === 'application/vnd.ms-excel'
       );
       
       if (dataFiles.length > 0) {
-        // Use backend service for data file processing
+        // Process data files and extract content as text to send directly to AI API
         try {
-          const backendResult = await backendService.processFile({
-            file: dataFiles[0], // Process first data file
-            prompt: prompt
-            // Remove aiApiUrl to let backend use its default AI API endpoint
-          });
+          // Get file content as text
+          const file = dataFiles[0];
+          let fileContent = '';
           
-          if (backendResult.success) {
-            // Backend returns AI response in data field
-            // Extract the actual response content from the AI API response
-            let responseContent = '';
+          if (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')) {
+            fileContent = await file.text();
+          } else if (file.type === 'application/json' || file.name.toLowerCase().endsWith('.json')) {
+            fileContent = await file.text();
+          } else if (file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')) {
+            fileContent = await file.text();
+          } else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+            // For Excel files, we still need backend processing
+            const backendResult = await backendService.processFile({
+              file: file,
+              prompt: prompt
+            });
             
-            if (typeof backendResult.data === 'string') {
-              responseContent = backendResult.data;
-            } else if (backendResult.data && typeof backendResult.data === 'object') {
-              // Check for common response fields from AI API
-              if (backendResult.data.response) {
-                responseContent = backendResult.data.response;
-              } else if (backendResult.data.answer) {
-                responseContent = backendResult.data.answer;
-              } else if (backendResult.data.message) {
-                responseContent = backendResult.data.message;
-              } else if (backendResult.data.text) {
-                responseContent = backendResult.data.text;
-              } else {
-                // Fallback: stringify the entire object
-                responseContent = JSON.stringify(backendResult.data);
-              }
+            if (backendResult.success && backendResult.processed_data) {
+              // Create enhanced prompt with processed data from backend
+              const fileInfo = backendResult.file_info || {};
+              const processedData = backendResult.processed_data;
+              
+              const enhancedPrompt = `File Information:
+- Filename: ${fileInfo.filename || file.name}
+- Size: ${fileInfo.size || 0} bytes (${fileInfo.size_mb || 0} MB)
+- Type: ${processedData.type || 'unknown'}
+
+Data Analysis:
+${JSON.stringify(processedData, null, 2)}
+
+User Request:
+${prompt}
+
+Please analyze the provided data and respond to the user's request. The data has been processed and structured for your analysis.`;
+              
+              // Send enhanced prompt to AI API
+              result = await sendDirectMessageAction(enhancedPrompt);
             } else {
-              responseContent = String(backendResult.data || '');
+              throw new Error(backendResult.error || 'Backend processing failed');
             }
-            
-            result = {
-              response: responseContent
-            };
           } else {
-            throw new Error(backendResult.error || 'Backend processing failed');
+            // For other data files, try to read as text
+            fileContent = await file.text();
           }
+          
+          // If we have file content, create enhanced prompt and send directly to AI API
+          if (fileContent && !result) {
+            const enhancedPrompt = `File: ${file.name} (${file.type})\n\nFile Content:\n${fileContent}\n\nUser Request:\n${prompt}\n\nPlease analyze the provided file data and respond to the user's request.`;
+            
+            result = await sendDirectMessageAction(enhancedPrompt);
+          }
+          
         } catch (error) {
-          console.error('Backend processing error:', error);
-          // Fallback to regular action if backend fails
+          console.error('File processing error:', error);
+          // Fallback to regular action if file processing fails
           result = await sendMessageAction(formData);
         }
       } else {
@@ -184,13 +204,21 @@ export function ChatUI() {
         
         // Extract message content from response.answer
         if (responseObj.answer) {
-          messageContent = responseObj.answer;
+          messageContent = typeof responseObj.answer === 'string' 
+            ? responseObj.answer 
+            : JSON.stringify(responseObj.answer);
         } else if (responseObj.message) {
-          messageContent = responseObj.message;
+          messageContent = typeof responseObj.message === 'string'
+            ? responseObj.message
+            : JSON.stringify(responseObj.message);
         } else if (responseObj.text) {
-          messageContent = responseObj.text;
+          messageContent = typeof responseObj.text === 'string'
+            ? responseObj.text
+            : JSON.stringify(responseObj.text);
         } else if (responseObj.content) {
-          messageContent = responseObj.content;
+          messageContent = typeof responseObj.content === 'string'
+            ? responseObj.content
+            : JSON.stringify(responseObj.content);
         }
         
         // Check for chart data in response.chart
@@ -213,17 +241,27 @@ export function ChatUI() {
         // Handle flat response structure
         // Always prioritize 'answer' field for message content
         if (parsedResponse.answer) {
-          messageContent = parsedResponse.answer;
+          messageContent = typeof parsedResponse.answer === 'string'
+            ? parsedResponse.answer
+            : JSON.stringify(parsedResponse.answer);
         } else if (parsedResponse.message) {
-          messageContent = parsedResponse.message;
+          messageContent = typeof parsedResponse.message === 'string'
+            ? parsedResponse.message
+            : JSON.stringify(parsedResponse.message);
         } else if (parsedResponse.text) {
-          messageContent = parsedResponse.text;
+          messageContent = typeof parsedResponse.text === 'string'
+            ? parsedResponse.text
+            : JSON.stringify(parsedResponse.text);
         } else if (parsedResponse.content) {
-          messageContent = parsedResponse.content;
+          messageContent = typeof parsedResponse.content === 'string'
+            ? parsedResponse.content
+            : JSON.stringify(parsedResponse.content);
         } else {
           // If no specific content field found, use the original response
           // This avoids double-stringifying already processed content
-          messageContent = result.response;
+          messageContent = typeof result.response === 'string'
+            ? result.response
+            : JSON.stringify(result.response);
         }
         
         // Check for Plotly chart data

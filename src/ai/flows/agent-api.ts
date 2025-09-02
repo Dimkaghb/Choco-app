@@ -63,8 +63,12 @@ export async function sendToAgent(input: SendToAgentInput): Promise<SendToAgentO
   const apiUrl = `${baseUrl}/agent/run`;
 
   try {
-    // Validate and transform input
-    const validatedInput = SendToAgentInputSchema.parse(input);
+    // Validate and transform input, add default session_id if not provided
+    const inputWithDefaults = {
+      ...input,
+      session_id: input.session_id || '339da255-b804-4b1c-a13d-4f7c5d1b907b'
+    };
+    const validatedInput = SendToAgentInputSchema.parse(inputWithDefaults);
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -119,6 +123,7 @@ export async function sendDirectMessage(message: string): Promise<SendToAgentOut
   try {
     const requestData = {
       message,
+      session_id: '339da255-b804-4b1c-a13d-4f7c5d1b907b',
       execution_mode: 'sync' as const,
       with_tts: false,
     };
@@ -215,7 +220,7 @@ export async function createSimpleAgentInput(
   const input: SendToAgentInput = {
     message,
     customer_id: options?.customer_id,
-    session_id: options?.session_id,
+    session_id: options?.session_id || '339da255-b804-4b1c-a13d-4f7c5d1b907b',
     metadata: options?.metadata,
     execution_mode: 'sync',
     with_tts: false,
@@ -245,7 +250,7 @@ export async function createMultiFileAgentInput(
   const input: SendToAgentInput = {
     message,
     customer_id: options?.customer_id,
-    session_id: options?.session_id,
+    session_id: options?.session_id || '339da255-b804-4b1c-a13d-4f7c5d1b907b',
     metadata: options?.metadata,
     execution_mode: 'sync',
     with_tts: false,
