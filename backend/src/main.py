@@ -5,7 +5,9 @@ from contextlib import asynccontextmanager
 from .config import settings
 from .file_processing.api import router as file_processing_router
 from .auth.api import router as auth_router
+from .chat.api import router as chat_router
 from .auth.database import connect_to_mongo, close_mongo_connection
+from .chat.database import create_indexes
 
 
 @asynccontextmanager
@@ -19,6 +21,10 @@ async def lifespan(app: FastAPI):
     try:
         await connect_to_mongo()
         print("MongoDB connection established")
+        
+        # Create database indexes
+        await create_indexes()
+        print("Database indexes created")
     except Exception as e:
         print(f"Failed to connect to MongoDB: {e}")
         raise e
@@ -48,6 +54,7 @@ app.add_middleware(
 # Include routers
 app.include_router(file_processing_router)
 app.include_router(auth_router)
+app.include_router(chat_router)
 
 
 @app.get("/")

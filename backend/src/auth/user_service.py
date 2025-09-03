@@ -32,7 +32,6 @@ class UserService:
             user_doc = {
                 "email": user_data.email,
                 "hashed_password": get_password_hash(user_data.password),
-                "full_name": user_data.full_name,
                 "is_active": True,
                 "created_at": now,
                 "updated_at": now
