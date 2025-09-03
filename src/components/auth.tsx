@@ -3,11 +3,13 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Command, X } from "lucide-react";
+import { authService } from "@/lib/auth-service";
 
 interface AuthProps {
   isOpen: boolean;
@@ -15,6 +17,7 @@ interface AuthProps {
 }
 
 export const Auth = ({ isOpen, onClose }: AuthProps) => {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,10 +26,23 @@ export const Auth = ({ isOpen, onClose }: AuthProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    // Handle authentication logic here
+    
+    try {
+      if (isSignUp) {
+        await authService.register({ email, password });
+      } else {
+        await authService.login({ email, password });
+      }
+      
+      // Close modal and redirect to chat
+      onClose();
+      router.push('/chat');
+    } catch (error) {
+      console.error('Authentication error:', error);
+      alert(error instanceof Error ? error.message : 'Authentication failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSignUp = () => {

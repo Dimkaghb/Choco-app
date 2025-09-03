@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 
 from .config import settings
 from .file_processing.api import router as file_processing_router
+from .auth.api import router as auth_router
+from .auth.database import connect_to_mongo, close_mongo_connection
 
 
 @asynccontextmanager
@@ -12,9 +14,20 @@ async def lifespan(app: FastAPI):
     # Startup
     print(f"Starting {settings.API_TITLE} v{settings.API_VERSION}")
     print(f"Server configuration: {settings.HOST}:{settings.PORT}")
+    
+    # Connect to MongoDB
+    try:
+        await connect_to_mongo()
+        print("MongoDB connection established")
+    except Exception as e:
+        print(f"Failed to connect to MongoDB: {e}")
+        raise e
+    
     yield
+    
     # Shutdown
     print("Shutting down application")
+    await close_mongo_connection()
 
 
 app = FastAPI(
@@ -34,6 +47,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(file_processing_router)
+app.include_router(auth_router)
 
 
 @app.get("/")

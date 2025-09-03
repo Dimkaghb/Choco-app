@@ -39,6 +39,16 @@ class Settings(BaseSettings):
     MAX_SAMPLE_ROWS: int = 10
     MAX_TEXT_PREVIEW: int = 1000
     
+    # Authentication Configuration
+    SECRET_KEY: str = "your-secret-key-change-this-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    
+    # MongoDB Configuration
+    MONGODB_URL: str = "mongodb://localhost:27017"
+    DATABASE_NAME: str = "Choco"
+    USERS_COLLECTION: str = "Choco_users"
+    
     model_config = {
         "env_file": ".env",
         "case_sensitive": True,
