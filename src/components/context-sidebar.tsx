@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileText, Settings, HelpCircle, ChevronLeft, ChevronRight, Upload, X } from 'lucide-react';
+import { FileText, Settings, HelpCircle, ChevronLeft, ChevronRight, Upload, X, Loader2 } from 'lucide-react';
 import { FileAttachment } from '@/lib/types';
-import { FileAttachmentList } from '@/components/file-attachment';
+import { DocumentList } from '@/components/document-list';
+import { useDocuments } from '@/contexts/document-context';
+import { useChatStore } from '@/hooks/use-chat-store';
 
 interface ContextSidebarProps {
   onCollapseChange?: (isCollapsed: boolean) => void;
@@ -13,29 +15,32 @@ interface ContextSidebarProps {
 export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [uploadedDocuments, setUploadedDocuments] = useState<FileAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { currentChatDocuments, uploadDocument, removeDocument, setCurrentChatId, isProcessing } = useDocuments();
+  const { currentChat } = useChatStore();
 
   useEffect(() => {
     onCollapseChange?.(isCollapsed);
   }, [isCollapsed, onCollapseChange]);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
+  useEffect(() => {
+    if (currentChat?.id) {
+      setCurrentChatId(currentChat.id);
+    }
+  }, [currentChat?.id, setCurrentChatId]);
 
-    Array.from(files).forEach(file => {
-      const fileAttachment: FileAttachment = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        url: URL.createObjectURL(file),
-        isImage: file.type.startsWith('image/')
-      };
-      
-      setUploadedDocuments(prev => [...prev, fileAttachment]);
-    });
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || !currentChat?.id) return;
+
+    for (const file of Array.from(files)) {
+      try {
+        await uploadDocument(file, currentChat.id, 'sidebar');
+      } catch (error) {
+        console.error('Failed to upload document:', error);
+      }
+    }
 
     // Reset file input
     if (event.target) {
@@ -44,13 +49,7 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
   };
 
   const handleRemoveDocument = (id: string) => {
-    setUploadedDocuments(prev => {
-      const doc = prev.find(d => d.id === id);
-      if (doc?.url) {
-        URL.revokeObjectURL(doc.url);
-      }
-      return prev.filter(d => d.id !== id);
-    });
+    removeDocument(id);
   };
 
   const handleDocumentsClick = () => {
@@ -144,21 +143,27 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
 
             {/* Documents List */}
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-foreground">Загруженные документы</h4>
-              {uploadedDocuments.length > 0 ? (
-                <div className="max-h-60 overflow-y-auto space-y-2">
-                  <FileAttachmentList
-                    attachments={uploadedDocuments}
-                    onRemove={handleRemoveDocument}
-                    isEditable={true}
-                    size="sm"
-                  />
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  Нет данных
-                </div>
-              )}
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-foreground">Загруженные документы</h4>
+                {isProcessing && (
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                )}
+              </div>
+              <div className="max-h-60 overflow-y-auto">
+                <DocumentList
+                  documents={currentChatDocuments}
+                  onRemove={handleRemoveDocument}
+                  showSource={true}
+                  showProcessingStatus={true}
+                  isEditable={true}
+                  size="sm"
+                />
+                {currentChatDocuments.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    {currentChat ? 'Нет загруженных документов' : 'Выберите чат для загрузки документов'}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

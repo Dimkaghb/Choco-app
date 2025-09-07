@@ -12,15 +12,26 @@ import { ChatMessages } from './chat-messages';
 import { ChatInput } from './chat-input';
 import { ContextSidebar } from './context-sidebar';
 import { chatService } from '@/lib/chat-service';
+import { useDocuments } from '@/contexts/document-context';
+import { useChatStore } from '@/hooks/use-chat-store';
 
 export function ChatUI() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | undefined>(undefined);
-  const [currentChat, setCurrentChat] = useState<Chat | undefined>(undefined);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isContextSidebarCollapsed, setIsContextSidebarCollapsed] = useState(false);
   const { toast } = useToast();
+  const { uploadDocument, currentChatDocuments, setCurrentChatId: setDocumentChatId } = useDocuments();
+  const { currentChat, setCurrentChat } = useChatStore();
+
+  // Sync current chat with document context and chat store
+  useEffect(() => {
+    if (currentChatId && currentChat) {
+      setDocumentChatId(currentChatId);
+      setCurrentChat(currentChat);
+    }
+  }, [currentChatId, currentChat, setDocumentChatId, setCurrentChat]);
 
   const handleSendMessage = async (formData: FormData) => {
     const prompt = formData.get('prompt') as string;
@@ -34,43 +45,46 @@ export function ChatUI() {
     // Collect all files (including legacy image field)
     const filesToProcess: File[] = [];
     
-    // Process all files
+    // Collect unique files (avoid duplicates between allFiles and imageFile)
+    const uniqueFiles = new Map<string, File>();
+    
+    // Add files from allFiles array
     [...allFiles].forEach(file => {
       if (file && file.size > 0) {
-        const url = URL.createObjectURL(file);
-        const isImage = file.type.startsWith('image/');
-        
-        attachments.push({
-          id: crypto.randomUUID(),
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          url,
-          isImage
-        });
-        
-        // Set first image as preview for backward compatibility
-        if (isImage && !imagePreviewUrl) {
-          imagePreviewUrl = url;
-        }
-        
-        filesToProcess.push(file);
+        const fileKey = `${file.name}-${file.size}-${file.lastModified}`;
+        uniqueFiles.set(fileKey, file);
       }
     });
-
-    // Handle legacy image field
-    if (imageFile && imageFile.size > 0 && attachments.length === 0) {
-      imagePreviewUrl = URL.createObjectURL(imageFile);
+    
+    // Add imageFile if it's not already in the collection
+    if (imageFile && imageFile.size > 0) {
+      const fileKey = `${imageFile.name}-${imageFile.size}-${imageFile.lastModified}`;
+      if (!uniqueFiles.has(fileKey)) {
+        uniqueFiles.set(fileKey, imageFile);
+      }
+    }
+    
+    // Process unique files
+    Array.from(uniqueFiles.values()).forEach(file => {
+      const url = URL.createObjectURL(file);
+      const isImage = file.type.startsWith('image/');
+      
       attachments.push({
         id: crypto.randomUUID(),
-        name: imageFile.name,
-        type: imageFile.type,
-        size: imageFile.size,
-        url: imagePreviewUrl,
-        isImage: true
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        url,
+        isImage
       });
-      filesToProcess.push(imageFile);
-    }
+      
+      // Set first image as preview for backward compatibility
+      if (isImage && !imagePreviewUrl) {
+        imagePreviewUrl = url;
+      }
+      
+      filesToProcess.push(file);
+    });
     
     // Ensure we have a current chat before proceeding
     let chatId: string;
@@ -84,6 +98,15 @@ export function ChatUI() {
         variant: 'destructive'
       });
       return;
+    }
+
+    // Upload files to document context
+    for (const file of filesToProcess) {
+      try {
+        await uploadDocument(file, chatId, 'chat');
+      } catch (error) {
+        console.error('Failed to upload document to context:', error);
+      }
     }
 
     const userMessage: Message = {

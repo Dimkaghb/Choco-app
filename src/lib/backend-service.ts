@@ -55,7 +55,7 @@ class BackendService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
-      const response = await fetch(`${this.config.baseUrl}/process-file`, {
+      const response = await fetch(`${this.config.baseUrl}/file-processing/process-file`, {
         method: 'POST',
         body: formData,
         signal: controller.signal,

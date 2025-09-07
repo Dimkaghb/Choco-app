@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/hooks/use-auth';
+import { DocumentProvider } from '@/contexts/document-context';
 
 export const metadata: Metadata = {
   title: 'ChocoAnalyze - Продвинутая платформа для анализа данных',
@@ -23,8 +24,10 @@ export default function RootLayout({
       </head>
       <body className={cn("font-body antialiased", "bg-background")}>
         <AuthProvider>
-          {children}
-          <Toaster />
+          <DocumentProvider>
+            {children}
+            <Toaster />
+          </DocumentProvider>
         </AuthProvider>
       </body>
     </html>
