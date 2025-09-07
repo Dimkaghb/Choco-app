@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileText, Settings, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Settings, HelpCircle, ChevronLeft, ChevronRight, Upload, X } from 'lucide-react';
+import { FileAttachment } from '@/lib/types';
+import { FileAttachmentList } from '@/components/file-attachment';
 
 interface ContextSidebarProps {
   onCollapseChange?: (isCollapsed: boolean) => void;
@@ -10,26 +12,72 @@ interface ContextSidebarProps {
 
 export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [uploadedDocuments, setUploadedDocuments] = useState<FileAttachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     onCollapseChange?.(isCollapsed);
   }, [isCollapsed, onCollapseChange]);
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      const fileAttachment: FileAttachment = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        url: URL.createObjectURL(file),
+        isImage: file.type.startsWith('image/')
+      };
+      
+      setUploadedDocuments(prev => [...prev, fileAttachment]);
+    });
+
+    // Reset file input
+    if (event.target) {
+      event.target.value = '';
+    }
+  };
+
+  const handleRemoveDocument = (id: string) => {
+    setUploadedDocuments(prev => {
+      const doc = prev.find(d => d.id === id);
+      if (doc?.url) {
+        URL.revokeObjectURL(doc.url);
+      }
+      return prev.filter(d => d.id !== id);
+    });
+  };
+
+  const handleDocumentsClick = () => {
+    if (isCollapsed) {
+      setIsCollapsed(false);
+    }
+    setActiveSection(activeSection === 'documents' ? null : 'documents');
+  };
+
   const menuItems = [
     {
       icon: <FileText className="w-5 h-5" />,
       label: 'Документы',
-      onClick: () => console.log('Документы clicked')
+      onClick: handleDocumentsClick,
+      isActive: activeSection === 'documents'
     },
     {
       icon: <Settings className="w-5 h-5" />,
       label: 'Настройки',
-      onClick: () => console.log('Настройки clicked')
+      onClick: () => console.log('Настройки clicked'),
+      isActive: false
     },
     {
       icon: <HelpCircle className="w-5 h-5" />,
       label: 'Помощь',
-      onClick: () => console.log('Помощь clicked')
+      onClick: () => console.log('Помощь clicked'),
+      isActive: false
     }
   ];
 
@@ -63,13 +111,57 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
               onClick={item.onClick}
               className={`w-full justify-start gap-3 h-12 text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-200 ${
                 isCollapsed ? 'px-3' : 'px-4'
-              }`}
+              } ${item.isActive ? 'bg-white/10 text-foreground' : ''}`}
             >
               {item.icon}
               {!isCollapsed && <span>{item.label}</span>}
             </Button>
           ))}
         </div>
+
+        {/* Document Upload Section */}
+        {!isCollapsed && activeSection === 'documents' && (
+          <div className="px-4 pb-4 space-y-4">
+            {/* Upload Button */}
+            <div className="space-y-2">
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 transition-all duration-200"
+                variant="outline"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Загрузить документ
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </div>
+
+            {/* Documents List */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-foreground">Загруженные документы</h4>
+              {uploadedDocuments.length > 0 ? (
+                <div className="max-h-60 overflow-y-auto space-y-2">
+                  <FileAttachmentList
+                    attachments={uploadedDocuments}
+                    onRemove={handleRemoveDocument}
+                    isEditable={true}
+                    size="sm"
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  Нет данных
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Bottom section with report button */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
