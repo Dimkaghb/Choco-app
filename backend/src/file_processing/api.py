@@ -1,8 +1,8 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from typing import Dict, Any
 
-from .models import ProcessFileResponse
-from .service import file_processing_service
+from file_processing.models import ProcessFileResponse
+from file_processing.service import file_processing_service
 
 
 router = APIRouter(prefix="/file-processing", tags=["file-processing"])
@@ -26,7 +26,7 @@ async def process_file(
     """
     # Validate file type
     if not file_processing_service.validate_file_type(file.filename):
-        from ..config import settings
+        from config import settings
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported file type. Allowed types: {settings.ALLOWED_FILE_TYPES}"
@@ -45,7 +45,7 @@ async def get_supported_formats() -> Dict[str, Any]:
     Returns:
         Dictionary containing supported file formats and limits
     """
-    from ..config import settings
+    from config import settings
     
     return {
         "supported_formats": settings.ALLOWED_FILE_TYPES,

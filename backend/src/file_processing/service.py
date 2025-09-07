@@ -5,9 +5,9 @@ from typing import Dict, Any, List
 from pathlib import Path
 from fastapi import HTTPException, UploadFile
 
-from ..config import settings
-from .models import ProcessFileResponse, FileInfo, ProcessedData
-from .utils import FileProcessor
+from config import settings
+from file_processing.models import ProcessFileResponse, FileInfo, ProcessedData
+from file_processing.utils import FileProcessor
 
 
 class FileProcessingService:

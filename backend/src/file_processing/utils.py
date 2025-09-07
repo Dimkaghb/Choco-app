@@ -5,7 +5,7 @@ from typing import Dict, Any, List
 from pathlib import Path
 from fastapi import HTTPException
 
-from ..config import settings
+from config import settings
 
 
 class FileProcessor:

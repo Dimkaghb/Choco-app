@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import ConnectionFailure
-from ..config import settings
+from config import settings
 import logging
 
 logger = logging.getLogger(__name__)

@@ -10,6 +10,7 @@ import { ChatSidebar } from './chat-sidebar';
 import { ChatHeader } from './chat-header';
 import { ChatMessages } from './chat-messages';
 import { ChatInput } from './chat-input';
+import { ContextSidebar } from './context-sidebar';
 import { chatService } from '@/lib/chat-service';
 
 export function ChatUI() {
@@ -17,6 +18,8 @@ export function ChatUI() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | undefined>(undefined);
   const [currentChat, setCurrentChat] = useState<Chat | undefined>(undefined);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isContextSidebarCollapsed, setIsContextSidebarCollapsed] = useState(false);
   const { toast } = useToast();
 
   const handleSendMessage = async (formData: FormData) => {
@@ -138,7 +141,7 @@ export function ChatUI() {
             
             if (backendResult.success && backendResult.processed_data) {
               // Create enhanced prompt with processed data from backend
-              const fileInfo = backendResult.file_info || {};
+              const fileInfo = backendResult.file_info || {} as any;
               const processedData = backendResult.processed_data;
               
               const enhancedPrompt = `File Information:
@@ -421,7 +424,7 @@ Please analyze the provided data and respond to the user's request. The data has
   }, [currentChatId]);
 
   return (
-      <div className="flex h-screen w-full bg-background text-foreground">
+      <div className="flex h-screen w-full bg-background text-foreground relative">
         <aside className="hidden md:flex md:w-80 lg:w-96 h-full">
           <ChatSidebar 
             currentChatId={currentChatId}
@@ -429,11 +432,12 @@ Please analyze the provided data and respond to the user's request. The data has
             onNewChat={handleNewChat}
           />
         </aside>
-        <main className="flex flex-1 flex-col h-full">
+        <main className={`flex flex-1 flex-col h-full transition-all duration-300 ${isContextSidebarCollapsed ? 'md:pr-16' : 'md:pr-80'}`}>
           <ChatHeader currentChat={currentChat} />
           <ChatMessages messages={messages} isLoading={isLoading} />
           <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
         </main>
+        <ContextSidebar onCollapseChange={setIsContextSidebarCollapsed} />
       </div>
     );
 }

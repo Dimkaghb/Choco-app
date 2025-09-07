@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorCollection
-from ..auth.database import get_database
-from ..config import settings
+from auth.database import get_database
+from config import settings
 
 def get_chats_collection() -> AsyncIOMotorCollection:
     """Get chats collection"""

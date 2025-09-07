@@ -1,12 +1,16 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import List
-from .models import (
-    ChatCreate, ChatUpdate, ChatResponse, ChatWithMessages,
-    MessageCreate, MessageResponse
+from chat.models import (
+    ChatCreate,
+    ChatUpdate,
+    ChatResponse,
+    ChatWithMessages,
+    MessageCreate,
+    MessageResponse
 )
-from .service import chat_service
-from ..auth.dependencies import get_current_user
-from ..auth.models import UserResponse
+from chat.service import chat_service
+from auth.dependencies import get_current_user
+from auth.models import UserResponse
 import logging
 
 logger = logging.getLogger(__name__)

@@ -2,8 +2,8 @@ from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
 from pymongo.errors import DuplicateKeyError
-from .database import get_chats_collection, get_messages_collection
-from .models import (
+from chat.database import get_chats_collection, get_messages_collection
+from chat.models import (
     ChatCreate, ChatUpdate, ChatResponse, ChatWithMessages,
     MessageCreate, MessageResponse, ChatInDB, MessageInDB
 )
