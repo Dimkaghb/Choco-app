@@ -1,5 +1,10 @@
 import { ChatUI } from "@/components/chat-ui";
+import { ProtectedRoute } from "@/components/protected-route";
 
 export default function ChatPage() {
-  return <ChatUI />;
+  return (
+    <ProtectedRoute>
+      <ChatUI />
+    </ProtectedRoute>
+  );
 }

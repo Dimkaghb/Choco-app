@@ -125,3 +125,4 @@ VITE_API_URL=https://your-api-domain.com/api/v1
 5. `src/components/chat-input.tsx` - Обновлен для поддержки множественных файлов
 6. `src/components/chat-ui.tsx` - Обновлена обработка файловых вложений
 7. `src/components/chat-message.tsx` - Добавлено отображение файлов в сообщениях
+

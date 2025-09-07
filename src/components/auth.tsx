@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Command, X } from "lucide-react";
-import { authService } from "@/lib/auth-service";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AuthProps {
   isOpen: boolean;
@@ -18,6 +18,7 @@ interface AuthProps {
 
 export const Auth = ({ isOpen, onClose }: AuthProps) => {
   const router = useRouter();
+  const { login, register } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -29,9 +30,9 @@ export const Auth = ({ isOpen, onClose }: AuthProps) => {
     
     try {
       if (isSignUp) {
-        await authService.register({ email, password });
+        await register(email, password);
       } else {
-        await authService.login({ email, password });
+        await login(email, password);
       }
       
       // Close modal and redirect to chat

@@ -9,36 +9,61 @@ export interface FileAttachment {
 
 export interface Message {
   id: string;
-  role: 'user' | 'ai';
+  role: 'user' | 'assistant';
   content: string;
-  image?: string; // Deprecated: use attachments instead
   attachments?: FileAttachment[];
-  timestamp: Date;
+  timestamp: string | Date;
   visualization?: {
     enabled: boolean;
-    chartData?: {
-      chartType: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram';
-      data: any[];
-      title?: string;
-      xLabel?: string;
-      yLabel?: string;
-      width?: number;
-      height?: number;
-      colors?: string[];
-      options?: {
-        showGrid?: boolean;
-        showLegend?: boolean;
-        animate?: boolean;
-        margin?: { top: number; right: number; bottom: number; left: number };
-      };
-    };
+    chartData?: any;
   };
   plotlyChart?: {
-    data: Array<{
-      label: string;
-      value: number;
-    }>;
-    type: 'bar' | 'line' | 'pie' | 'scatter';
+    data: any[];
+    type: string;
+    title?: string;
+  };
+}
+
+// Chat-related types
+export interface Chat {
+  id: string;
+  title: string;
+  user_id: string;
+  created_at: string | Date;
+  updated_at: string | Date;
+  last_message_preview?: string;
+  message_count?: number;
+}
+
+export interface ChatWithMessages extends Chat {
+  messages: Message[];
+}
+
+export interface ChatCreate {
+  title: string;
+}
+
+export interface ChatUpdate {
+  title?: string;
+}
+
+export interface MessageCreate {
+  role: 'user' | 'assistant';
+  content: string;
+  attachments?: FileAttachment[];
+  visualization?: {
+    enabled: boolean;
+    chartData?: any;
+  };
+  plotlyChart?: {
+    data: any[];
+    type: string;
+    title?: string;
+  };
+  // Backend uses snake_case
+  plotly_chart?: {
+    data: any[];
+    type: string;
     title?: string;
   };
 }

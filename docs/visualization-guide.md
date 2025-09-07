@@ -163,3 +163,4 @@ When a user asks for data visualization, your backend should:
 
 The chat component will automatically detect the visualization flag and render the chart below the text message.
 
+

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
 import { 
   ArrowRight, 
@@ -680,10 +681,17 @@ const Footer = () => {
 // Main Landing Component
 const Landing = () => {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const handleStartTrading = () => {
-    setIsAuthOpen(true);
+    if (isAuthenticated) {
+      // If user is already authenticated, go directly to chat
+      router.push('/chat');
+    } else {
+      // If not authenticated, show auth modal
+      setIsAuthOpen(true);
+    }
   };
 
   const handleCloseAuth = () => {

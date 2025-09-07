@@ -1,19 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { sendMessageAction, sendDirectMessageAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import type { Message } from '@/lib/types';
+import type { Message, Chat, MessageCreate } from '@/lib/types';
 import { backendService } from '@/lib/backend-service';
 import { extractChartFromResponse, removeChartFromResponse } from '@/lib/chart-extractor';
 import { ChatSidebar } from './chat-sidebar';
 import { ChatHeader } from './chat-header';
 import { ChatMessages } from './chat-messages';
 import { ChatInput } from './chat-input';
+import { chatService } from '@/lib/chat-service';
 
 export function ChatUI() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentChatId, setCurrentChatId] = useState<string | undefined>(undefined);
+  const [currentChat, setCurrentChat] = useState<Chat | undefined>(undefined);
   const { toast } = useToast();
 
   const handleSendMessage = async (formData: FormData) => {
@@ -66,11 +69,24 @@ export function ChatUI() {
       filesToProcess.push(imageFile);
     }
     
+    // Ensure we have a current chat before proceeding
+    let chatId: string;
+    try {
+      chatId = await ensureCurrentChat(prompt);
+    } catch (error) {
+      console.error('Failed to create chat:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось создать чат',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
       content: prompt,
-      image: imagePreviewUrl, // Keep for backward compatibility
       attachments,
       timestamp: new Date(),
     };
@@ -298,25 +314,126 @@ Please analyze the provided data and respond to the user's request. The data has
 
     const aiMessage: Message = {
       id: crypto.randomUUID(),
-      role: 'ai',
+      role: 'assistant',
       content: messageContent,
       timestamp: new Date(),
       visualization: visualizationData,
       plotlyChart: plotlyChartData,
     };
     setMessages((prev) => [...prev, aiMessage]);
+    
+    // Save messages to current chat if one exists
+    if (currentChatId) {
+      try {
+        // Save user message
+        await chatService.addMessage(currentChatId, {
+          role: 'user',
+          content: prompt,
+          attachments: attachments
+        });
+        
+        // Save AI message
+        await chatService.addMessage(currentChatId, {
+          role: 'assistant',
+          content: messageContent,
+          attachments: [],
+          visualization: visualizationData,
+          // Convert plotlyChart (frontend) to plotly_chart (backend)
+          plotly_chart: plotlyChartData
+        } as any);
+      } catch (error) {
+        console.error('Failed to save messages to chat:', error);
+        // Don't show error to user as the chat still works locally
+      }
+    }
   };
 
+  const handleChatSelect = useCallback(async (chatId: string) => {
+    if (!chatId || chatId === 'undefined') {
+      console.error('Invalid chatId provided:', chatId);
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      console.log('Loading chat with ID:', chatId);
+      const chatWithMessages = await chatService.getChat(chatId);
+      console.log('Received chat data:', chatWithMessages);
+      console.log('Messages count:', chatWithMessages.messages?.length || 0);
+      
+      setCurrentChatId(chatId);
+      setCurrentChat(chatWithMessages);
+      
+      // Convert backend messages to frontend format
+      const formattedMessages: Message[] = chatWithMessages.messages.map(msg => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp),
+        role: msg.role as 'user' | 'assistant',
+        // Convert plotly_chart (backend) to plotlyChart (frontend)
+        plotlyChart: (msg as any).plotly_chart || msg.plotlyChart
+      }));
+      
+      console.log('Formatted messages:', formattedMessages);
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Failed to load chat:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить чат',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  const handleNewChat = useCallback(() => {
+    setCurrentChatId(undefined);
+    setCurrentChat(undefined);
+    setMessages([]);
+  }, []);
+
+  // Auto-create chat when user sends first message in a new chat
+  const ensureCurrentChat = useCallback(async (firstMessage: string): Promise<string> => {
+    if (currentChatId) {
+      return currentChatId;
+    }
+    
+    try {
+      // Create a new chat with a title based on the first message
+      const title = firstMessage.length > 50 
+        ? firstMessage.substring(0, 47) + '...'
+        : firstMessage;
+      
+      const newChat = await chatService.createChat({ title });
+      setCurrentChatId(newChat.id);
+      setCurrentChat(newChat);
+      
+      // Trigger sidebar refresh by forcing a re-render
+      // This will cause the sidebar to reload chats and show the new one
+      window.dispatchEvent(new CustomEvent('chatCreated', { detail: newChat }));
+      
+      return newChat.id;
+    } catch (error) {
+      console.error('Failed to create chat:', error);
+      throw error;
+    }
+  }, [currentChatId]);
+
   return (
-    <div className="flex h-screen w-full bg-background text-foreground">
-      <aside className="hidden md:flex md:w-80 lg:w-96 h-full">
-        <ChatSidebar />
-      </aside>
-      <main className="flex flex-1 flex-col h-full">
-        <ChatHeader />
-        <ChatMessages messages={messages} isLoading={isLoading} />
-        <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
-      </main>
-    </div>
-  );
+      <div className="flex h-screen w-full bg-background text-foreground">
+        <aside className="hidden md:flex md:w-80 lg:w-96 h-full">
+          <ChatSidebar 
+            currentChatId={currentChatId}
+            onChatSelect={handleChatSelect}
+            onNewChat={handleNewChat}
+          />
+        </aside>
+        <main className="flex flex-1 flex-col h-full">
+          <ChatHeader currentChat={currentChat} />
+          <ChatMessages messages={messages} isLoading={isLoading} />
+          <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
+        </main>
+      </div>
+    );
 }
