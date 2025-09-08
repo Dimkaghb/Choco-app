@@ -63,12 +63,8 @@ export async function sendToAgent(input: SendToAgentInput): Promise<SendToAgentO
   const apiUrl = `${baseUrl}/agent/run`;
 
   try {
-    // Validate and transform input, add default session_id if not provided
-    const inputWithDefaults = {
-      ...input,
-      session_id: input.session_id || '339da255-b804-4b1c-a13d-4f7c5d1b907b'
-    };
-    const validatedInput = SendToAgentInputSchema.parse(inputWithDefaults);
+    // Validate input - session_id should be provided by caller
+    const validatedInput = SendToAgentInputSchema.parse(input);
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -111,7 +107,7 @@ export async function sendToAgent(input: SendToAgentInput): Promise<SendToAgentO
  * Sends a simple text message directly to the AI API without files.
  * This is optimized for fast responses when no file processing is needed.
  */
-export async function sendDirectMessage(message: string): Promise<SendToAgentOutput> {
+export async function sendDirectMessage(message: string, sessionId: string): Promise<SendToAgentOutput> {
   const baseUrl = process.env.VITE_API_URL;
   
   if (!baseUrl) {
@@ -123,7 +119,7 @@ export async function sendDirectMessage(message: string): Promise<SendToAgentOut
   try {
     const requestData = {
       message,
-      session_id: '339da255-b804-4b1c-a13d-4f7c5d1b907b',
+      session_id: sessionId,
       execution_mode: 'sync' as const,
       with_tts: false,
     };
@@ -220,7 +216,7 @@ export async function createSimpleAgentInput(
   const input: SendToAgentInput = {
     message,
     customer_id: options?.customer_id,
-    session_id: options?.session_id || '339da255-b804-4b1c-a13d-4f7c5d1b907b',
+    session_id: options?.session_id,
     metadata: options?.metadata,
     execution_mode: 'sync',
     with_tts: false,
@@ -250,7 +246,7 @@ export async function createMultiFileAgentInput(
   const input: SendToAgentInput = {
     message,
     customer_id: options?.customer_id,
-    session_id: options?.session_id || '339da255-b804-4b1c-a13d-4f7c5d1b907b',
+    session_id: options?.session_id,
     metadata: options?.metadata,
     execution_mode: 'sync',
     with_tts: false,

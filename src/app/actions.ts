@@ -7,6 +7,7 @@ const sendMessageActionSchema = z.object({
   prompt: z.string(),
   image: z.instanceof(File).optional(), // Deprecated: use files instead
   files: z.array(z.instanceof(File)).optional(),
+  sessionId: z.string(),
 });
 
 export async function sendMessageAction(formData: FormData) {
@@ -31,6 +32,7 @@ export async function sendMessageAction(formData: FormData) {
     prompt: formData.get("prompt"),
     image: imageFile instanceof File ? imageFile : undefined,
     files: allFiles,
+    sessionId: formData.get("sessionId"),
   });
 
   if (!validatedData.success) {
@@ -43,7 +45,7 @@ export async function sendMessageAction(formData: FormData) {
     };
   }
 
-  const { prompt, files } = validatedData.data;
+  const { prompt, files, sessionId } = validatedData.data;
 
   try {
     // Create the agent input with the new API structure
@@ -51,9 +53,7 @@ export async function sendMessageAction(formData: FormData) {
       prompt,
       files || [],
       {
-        // You can add customer_id, session_id, etc. here if needed
-        // customer_id: "some-customer-id",
-        // session_id: "some-session-id",
+        session_id: sessionId,
         metadata: {
           timestamp: new Date().toISOString(),
           source: "chat-ui",
@@ -75,7 +75,7 @@ export async function sendMessageAction(formData: FormData) {
  * Optimized action for sending messages without files directly to AI API
  * Bypasses backend processing for faster responses
  */
-export async function sendDirectMessageAction(prompt: string) {
+export async function sendDirectMessageAction(prompt: string, sessionId: string) {
   if (!prompt || prompt.trim().length === 0) {
     return {
       failure: {
@@ -84,8 +84,16 @@ export async function sendDirectMessageAction(prompt: string) {
     };
   }
 
+  if (!sessionId) {
+    return {
+      failure: {
+        prompt: "Session ID is required",
+      },
+    };
+  }
+
   try {
-    const result = await sendDirectMessage(prompt);
+    const result = await sendDirectMessage(prompt, sessionId);
     return { response: result.response };
   } catch (e) {
     console.error(e);

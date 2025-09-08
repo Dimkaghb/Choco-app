@@ -2,6 +2,7 @@ from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
 from pymongo.errors import DuplicateKeyError
+import uuid
 from chat.database import get_chats_collection, get_messages_collection
 from chat.models import (
     ChatCreate, ChatUpdate, ChatResponse, ChatWithMessages,
@@ -20,9 +21,13 @@ class ChatService:
             chats_collection = get_chats_collection()
             
             now = datetime.utcnow()
+            # Generate a random session_id for AI requests
+            session_id = str(uuid.uuid4())
+            
             chat_doc = ChatInDB(
                 user_id=user_id,
                 title=chat_data.title or "New Chat",
+                session_id=session_id,
                 last_message_preview=None,
                 message_count=0,
                 created_at=now,
@@ -50,6 +55,9 @@ class ChatService:
             chats = []
             async for chat_doc in cursor:
                 chat_doc["_id"] = str(chat_doc["_id"])
+                # Add default session_id for existing records that don't have it
+                if "session_id" not in chat_doc:
+                    chat_doc["session_id"] = str(uuid.uuid4())
                 chats.append(ChatResponse(**chat_doc))
             
             return chats
@@ -74,6 +82,9 @@ class ChatService:
                 return None
             
             chat_doc["_id"] = str(chat_doc["_id"])
+            # Add default session_id for existing records that don't have it
+            if "session_id" not in chat_doc:
+                chat_doc["session_id"] = str(uuid.uuid4())
             
             # Get messages
             cursor = messages_collection.find(

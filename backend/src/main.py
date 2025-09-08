@@ -6,6 +6,7 @@ from config import settings
 from file_processing.api import router as file_processing_router
 from auth.api import router as auth_router
 from chat.api import router as chat_router
+from report.api import router as report_router
 from auth.database import connect_to_mongo, close_mongo_connection
 from chat.database import create_indexes
 
@@ -55,6 +56,7 @@ app.add_middleware(
 app.include_router(file_processing_router)
 app.include_router(auth_router)
 app.include_router(chat_router)
+app.include_router(report_router)
 
 
 @app.get("/")

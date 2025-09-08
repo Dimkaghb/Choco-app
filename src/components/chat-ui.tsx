@@ -122,10 +122,22 @@ export function ChatUI() {
 
     let result: any;
     
+    // Get session_id from current chat
+    const sessionId = currentChat?.session_id;
+    if (!sessionId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось получить идентификатор сессии чата',
+        variant: 'destructive'
+      });
+      setIsLoading(false);
+      return;
+    }
+
     // Check if we have any files at all
     if (filesToProcess.length === 0) {
       // No files - send directly to AI API for fastest response
-      result = await sendDirectMessageAction(prompt);
+      result = await sendDirectMessageAction(prompt, sessionId);
     } else {
       // Check if we have data files that need backend processing
       const dataFiles = filesToProcess.filter(file => 
@@ -181,7 +193,7 @@ ${prompt}
 Please analyze the provided data and respond to the user's request. The data has been processed and structured for your analysis.`;
               
               // Send enhanced prompt to AI API
-              result = await sendDirectMessageAction(enhancedPrompt);
+            result = await sendDirectMessageAction(enhancedPrompt, sessionId);
             } else {
               throw new Error(backendResult.error || 'Backend processing failed');
             }
@@ -194,16 +206,18 @@ Please analyze the provided data and respond to the user's request. The data has
           if (fileContent && !result) {
             const enhancedPrompt = `File: ${file.name} (${file.type})\n\nFile Content:\n${fileContent}\n\nUser Request:\n${prompt}\n\nPlease analyze the provided file data and respond to the user's request.`;
             
-            result = await sendDirectMessageAction(enhancedPrompt);
+            result = await sendDirectMessageAction(enhancedPrompt, sessionId);
           }
           
         } catch (error) {
           console.error('File processing error:', error);
           // Fallback to regular action if file processing fails
+          formData.append('sessionId', sessionId);
           result = await sendMessageAction(formData);
         }
       } else {
         // Use regular action for image-only messages
+        formData.append('sessionId', sessionId);
         result = await sendMessageAction(formData);
       }
     }

@@ -42,6 +42,7 @@ class ChatResponse(BaseModel):
     id: str = Field(alias="_id", serialization_alias="id")
     user_id: str
     title: str
+    session_id: str
     last_message_preview: Optional[str] = None
     message_count: int = 0
     created_at: datetime
@@ -74,6 +75,7 @@ class ChatInDB(BaseModel):
     """Chat model as stored in database"""
     user_id: str
     title: str
+    session_id: str
     last_message_preview: Optional[str] = None
     message_count: int = 0
     created_at: datetime
