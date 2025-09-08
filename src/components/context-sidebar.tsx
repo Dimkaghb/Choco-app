@@ -7,6 +7,7 @@ import { FileAttachment } from '@/lib/types';
 import { DocumentList } from '@/components/document-list';
 import { useDocuments } from '@/contexts/document-context';
 import { useChatStore } from '@/hooks/use-chat-store';
+import { ReportCreationModal } from '@/components/report-creation-modal';
 
 interface ContextSidebarProps {
   onCollapseChange?: (isCollapsed: boolean) => void;
@@ -15,6 +16,7 @@ interface ContextSidebarProps {
 export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { currentChatDocuments, uploadDocument, removeDocument, setCurrentChatId, isProcessing } = useDocuments();
@@ -174,7 +176,7 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
             className={`w-full bg-gradient-to-r from-primary/80 to-primary hover:from-primary hover:to-primary/90 text-primary-foreground font-medium transition-all duration-300 shadow-lg hover:shadow-primary/25 ${
               isCollapsed ? 'px-3' : 'px-6'
             }`}
-            onClick={() => console.log('Создать отчетность clicked')}
+            onClick={() => setIsReportModalOpen(true)}
           >
             {isCollapsed ? (
               <FileText className="w-5 h-5" />
@@ -184,6 +186,12 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
           </Button>
         </div>
       </div>
+      
+      {/* Report Creation Modal */}
+      <ReportCreationModal 
+        isOpen={isReportModalOpen} 
+        onClose={() => setIsReportModalOpen(false)} 
+      />
     </div>
   );
 }
