@@ -22,6 +22,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Auth } from "@/components/auth";
+import heroImg from "@/assets/hero.png";
+
 
 // Features configuration
 const features = [
@@ -772,14 +774,14 @@ const Landing = () => {
         >
           <div className="glass rounded-xl overflow-hidden">
             <img
-              src="/lovable-uploads/c32c6788-5e4a-4fee-afee-604b03113c7f.png"
+              src={heroImg.src}
               alt="CryptoTrade Dashboard"
               className="w-full h-auto"
             />
           </div>
         </motion.div>
       </motion.section>
-
+    
       {/* Logo Carousel */}
       <LogoCarousel />
 

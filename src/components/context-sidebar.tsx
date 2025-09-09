@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileText, Settings, HelpCircle, ChevronLeft, ChevronRight, Upload, X, Loader2 } from 'lucide-react';
 import { FileAttachment } from '@/lib/types';
 import { DocumentList } from '@/components/document-list';
@@ -122,7 +123,7 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
 
         {/* Document Upload Section */}
         {!isCollapsed && activeSection === 'documents' && (
-          <div className="px-4 pb-4 space-y-4">
+          <div className="flex-1 flex flex-col px-4 pb-4 space-y-4 min-h-0 overflow-hidden">
             {/* Upload Button */}
             <div className="space-y-2">
               <Button
@@ -144,27 +145,29 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
             </div>
 
             {/* Documents List */}
-            <div className="space-y-2">
+            <div className="space-y-2 flex-1 min-h-0">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-medium text-foreground">Загруженные документы</h4>
                 {isProcessing && (
                   <Loader2 className="w-4 h-4 animate-spin text-primary" />
                 )}
               </div>
-              <div className="max-h-60 overflow-y-auto">
-                <DocumentList
-                  documents={currentChatDocuments}
-                  onRemove={handleRemoveDocument}
-                  showSource={true}
-                  showProcessingStatus={true}
-                  isEditable={true}
-                  size="sm"
-                />
-                {currentChatDocuments.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    {currentChat ? 'Нет загруженных документов' : 'Выберите чат для загрузки документов'}
-                  </div>
-                )}
+              <div className="flex-1 min-h-0">
+                <ScrollArea className="h-64">
+                  <DocumentList
+                    documents={currentChatDocuments}
+                    onRemove={handleRemoveDocument}
+                    showSource={true}
+                    showProcessingStatus={true}
+                    isEditable={true}
+                    size="sm"
+                  />
+                  {currentChatDocuments.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground text-sm">
+                      {currentChat ? 'Нет загруженных документов' : 'Выберите чат для загрузки документов'}
+                    </div>
+                  )}
+                </ScrollArea>
               </div>
             </div>
           </div>
