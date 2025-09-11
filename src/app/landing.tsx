@@ -238,61 +238,6 @@ const Navigation = ({ onStartTrading }: { onStartTrading: () => void }) => {
   );
 };
 
-// LogoCarousel Component
-// const LogoCarousel = () => {
-//   const logos = [
-//     {freeDomLogo},
-//     {freeDomLogo},
-//     {freeDomLogo},
-//     {freeDomLogo},
-//     {freeDomLogo},
-//   ];
-
-//   const extendedLogos = [...logos, ...logos, ...logos];
-
-//   return (
-//     <div className="w-full overflow-hidden bg-background/50 backdrop-blur-sm py-12 mt-20">
-//       <motion.div 
-//         className="flex space-x-16"
-//         initial={{ opacity: 0, x: "0%" }}
-//         animate={{
-//           opacity: 1,
-//           x: "-50%"
-//         }}
-//         transition={{
-//           opacity: { duration: 0.5 },
-//           x: {
-//             duration: 15,
-//             repeat: Infinity,
-//             ease: "linear",
-//             delay: 0.5
-//           }
-//         }}
-//         style={{
-//           width: "fit-content",
-//           display: "flex",
-//           gap: "4rem"
-//         }}
-//       >
-//         {extendedLogos.map((logo, index) => (
-//           <motion.img
-//             key={`logo-${index}`}
-//             src={typeof logo === 'string' ? logo : logo.freeDomLogo.src}
-//             alt={`Partner logo ${index + 1}`}
-//             className="h-8 object-contain"
-//             initial={{ opacity: 0.5 }}
-//             whileHover={{ 
-//               opacity: 1,
-//               scale: 1.05,
-//               transition: { duration: 0.2 }
-//             }}
-//           />
-//         ))}
-//       </motion.div>
-//     </div>
-//   );
-// }; 
-
 // FeatureTab Component
 const FeatureTab = ({ icon, title, description, isActive }: {
   icon: React.ReactNode;
@@ -534,7 +479,7 @@ const PricingSection = ({ onStartTrading }: { onStartTrading: () => void }) => {
 // TestimonialsSection Component
 const TestimonialsSection = () => {
   return (
-    <section className="py-20 overflow-hidden bg-black">
+    <section className="py-20 overflow-hidden">
       <div className="container px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -686,10 +631,8 @@ const Landing = () => {
 
   const handleStartTrading = () => {
     if (isAuthenticated) {
-      // If user is already authenticated, go directly to chat
       router.push('/chat');
     } else {
-      // If not authenticated, show auth modal
       setIsAuthOpen(true);
     }
   };
@@ -699,142 +642,141 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-foreground">
-      <Navigation onStartTrading={handleStartTrading} />
-      
-      {/* Hero Section */}
-      <motion.section 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative container px-4 pt-40 pb-20"
-      >
-        {/* Background */}
+    <>
+      <div className="fixed inset-0 -z-10">
         <div 
-          className="absolute inset-0 -z-10 bg-[#0A0A0A]"
-        />
-        
-        <div className="flex justify-center mb-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-block px-4 py-1.5 rounded-full glass"
-          >
-            <span className="text-sm font-medium">
-              <Command className="w-4 h-4 inline-block mr-2" />
-              Платформа анализа данных нового поколения
-            </span>
-          </motion.div>
-        </div>
-        
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h1 className="text-5xl md:text-7xl font-normal mb-4 tracking-tight">
-            <span className="text-gray-200">
-              Будущее
-            </span>
-            <br />
-            <span className="text-white font-medium">
-              Анализа Данных
-            </span>
-          </h1>
-          
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto"
-          >
-            Опыт беспрепятственного анализа данных с продвинутыми функциями, аналитикой в реальном времени и безопасностью институционального уровня.{" "}
-            <span className="text-white">Начните анализировать за минуты.</span>
-          </motion.p>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-          >
-            <Button size="lg" className="button-gradient" onClick={handleStartTrading}>
-              Начать анализ
-            </Button>
-            <Button size="lg" variant="link" className="text-white">
-              Посмотреть отчеты <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
-          </motion.div>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="relative mx-auto max-w-5xl mt-20"
-        >
-          <div className="glass rounded-xl overflow-hidden">
-            <img
-              src={heroImg.src}
-              alt="CryptoTrade Dashboard"
-              className="w-full h-auto"
-            />
-          </div>
-        </motion.div>
-      </motion.section>
-    
-      {/* Logo Carousel */}
-      {/* <LogoCarousel /> */}
-
-      {/* Features Section */}
-      <div id="features" className="bg-black">
-        <FeaturesSection />
-      </div>
-
-      {/* Pricing Section */}
-      <div id="pricing" className="bg-black">
-        <PricingSection onStartTrading={handleStartTrading} />
-      </div>
-
-      {/* Testimonials Section */}
-      <div className="bg-black">
-        <TestimonialsSection />
-      </div>
-
-      {/* CTA Section */}
-      <section className="container px-4 py-20 relative bg-black">
-        <div 
-          className="absolute inset-0 opacity-40"
+          className="absolute inset-0"
           style={{
             backgroundImage: 'url("/lovable-uploads/21f3edfb-62b5-4e35-9d03-7339d803b980.png")',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
           }}
         />
-        <motion.div
+        <div className="absolute inset-0 bg-black/70" />
+      </div>
+
+      <div className="relative min-h-screen text-foreground">
+        <Navigation onStartTrading={handleStartTrading} />
+      
+        {/* Hero Section */}
+        <motion.section 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-[#0A0A0A]/80 backdrop-blur-lg border border-white/10 rounded-2xl p-8 md:p-12 text-center relative z-10"
+          className="relative container px-4 pt-40 pb-20"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Готовы начать анализ?
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Присоединяйтесь к тысячам аналитиков, которые уже открыли для себя мощь нашей платформы.
-          </p>
-          <Button size="lg" className="button-gradient" onClick={handleStartTrading}>
-            Создать аккаунт
-            <ArrowRight className="ml-2 w-4 h-4" />
-          </Button>
-        </motion.div>
-      </section>
+          <div className="flex justify-center mb-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="inline-block px-4 py-1.5 rounded-full glass"
+            >
+              <span className="text-sm font-medium">
+                <Command className="w-4 h-4 inline-block mr-2" />
+                Платформа анализа данных нового поколения
+              </span>
+            </motion.div>
+          </div>
+          
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            <h1 className="text-5xl md:text-7xl font-normal mb-4 tracking-tight">
+              <span className="text-gray-200">
+                Будущее
+              </span>
+              <br />
+              <span className="text-white font-medium">
+                Анализа Данных
+              </span>
+            </h1>
+            
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto"
+            >
+              Опыт беспрепятственного анализа данных с продвинутыми функциями, аналитикой в реальном времени и безопасностью институционального уровня.{" "}
+              <span className="text-white">Начните анализировать за минуты.</span>
+            </motion.p>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            >
+              <Button size="lg" className="button-gradient" onClick={handleStartTrading}>
+                Начать анализ
+              </Button>
+              <Button size="lg" variant="link" className="text-white">
+                Посмотреть отчеты <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </motion.div>
+          </div>
 
-      {/* Footer */}
-      <div className="bg-black">
-        <Footer />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="relative mx-auto max-w-5xl mt-20"
+          >
+            <div className="glass rounded-xl overflow-hidden">
+              <img
+                src={heroImg.src}
+                alt="CryptoTrade Dashboard"
+                className="w-full h-auto"
+              />
+            </div>
+          </motion.div>
+        </motion.section>
+    
+        {/* Features Section */}
+        <div id="features">
+          <FeaturesSection />
+        </div>
+
+        {/* Pricing Section */}
+        <div id="pricing">
+          <PricingSection onStartTrading={handleStartTrading} />
+        </div>
+
+        {/* Testimonials Section */}
+        <div id="testimonials">
+          <TestimonialsSection />
+        </div>
+
+        {/* CTA Section */}
+        <section className="container px-4 py-20 relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-[#0A0A0A]/80 backdrop-blur-lg border border-white/10 rounded-2xl p-8 md:p-12 text-center relative z-10"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Готовы начать анализ?
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Присоединяйтесь к тысячам аналитиков, которые уже открыли для себя мощь нашей платформы.
+            </p>
+            <Button size="lg" className="button-gradient" onClick={handleStartTrading}>
+              Создать аккаунт
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </motion.div>
+        </section>
+
+        {/* Footer */}
+        <div>
+          <Footer />
+        </div>
       </div>
       
       {/* Auth Modal */}
       <Auth isOpen={isAuthOpen} onClose={handleCloseAuth} />
-    </div>
+    </>
   );
 };
 
