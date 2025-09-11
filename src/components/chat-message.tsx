@@ -20,24 +20,24 @@ export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
   return (
     <div
       className={cn(
-        "flex items-start gap-3 w-full",
+        "flex items-start gap-2 w-full",
         isUser ? "flex-row-reverse" : "flex-row"
       )}
     >
-      <Avatar className="h-8 w-8">
+      <Avatar className="h-6 w-6">
         <AvatarFallback>
-          {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+          {isUser ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3" />}
         </AvatarFallback>
       </Avatar>
       <div
         className={cn(
-          "flex flex-col gap-1 max-w-[80%] animate-in fade-in duration-300",
+          "flex flex-col gap-1 max-w-[85%] sm:max-w-[80%] md:max-w-[75%] animate-in fade-in duration-300 min-w-0",
           isUser ? "items-end" : "items-start"
         )}
       >
         <div
           className={cn(
-            "p-3 rounded-lg",
+            "p-2 sm:p-3 rounded-lg break-words overflow-hidden",
             isUser
               ? "bg-primary text-primary-foreground rounded-br-none"
               : "bg-secondary text-secondary-foreground rounded-bl-none"
@@ -45,7 +45,7 @@ export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
         >
           {/* Display file attachments */}
           {message.attachments && message.attachments.length > 0 && (
-            <div className="mb-3">
+            <div className="mb-2">
               <FileAttachmentList 
                 attachments={message.attachments} 
                 size="md"
@@ -75,24 +75,24 @@ export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
             </div>
           ) : (
             <>
-              <p className="text-sm whitespace-pre-wrap">
+              <p className="text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">
                 {message.content}
               </p>
               {message.visualization?.enabled && message.visualization.chartData && (
-                <div className="mt-4 w-full">
+                <div className="mt-4 w-full overflow-hidden">
                   <D3Visualization 
                     chartData={message.visualization.chartData}
-                    className="rounded-md border bg-background p-4"
+                    className="rounded-md border bg-background p-2 sm:p-4 max-w-full overflow-auto"
                   />
                 </div>
               )}
               {message.plotlyChart && (
-                <div className="mt-4 w-full">
+                <div className="mt-4 w-full overflow-hidden">
                   <PlotlyChart 
                     data={message.plotlyChart.data}
                     type={message.plotlyChart.type}
                     title={message.plotlyChart.title}
-                    className="rounded-md border bg-background p-4"
+                    className="rounded-md border bg-background p-2 sm:p-4 max-w-full overflow-auto"
                   />
                 </div>
               )}

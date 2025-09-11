@@ -21,16 +21,16 @@ export function ChatHeader({ currentChat }: ChatHeaderProps) {
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-border">
-      <div className="flex items-center gap-3">
-        <Avatar className="h-10 w-10">
+    <div className="flex items-center justify-between p-2 sm:p-3 md:p-4 border-b border-border">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
           <AvatarFallback>AI</AvatarFallback>
         </Avatar>
-        <div>
-          <p className="font-bold text-lg font-headline">
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-base sm:text-lg font-headline truncate">
             {currentChat ? currentChat.title : 'ChocoAnalyze AI Помощник'}
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">
             {currentChat 
               ? `Создан ${formatDate(currentChat.created_at.toString())}`
               : 'Онлайн'
@@ -38,8 +38,8 @@ export function ChatHeader({ currentChat }: ChatHeaderProps) {
           </p>
         </div>
       </div>
-      <Button variant="ghost" size="icon">
-        <Settings className="w-5 h-5" />
+      <Button variant="ghost" size="icon" className="flex-shrink-0">
+        <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
       </Button>
     </div>
   );

@@ -23,8 +23,8 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   }, [messages]);
 
   return (
-    <ScrollArea className="flex-1" ref={scrollAreaRef}>
-      <div className="p-4 md:p-6 space-y-6">
+    <ScrollArea className="flex-1 h-full overflow-hidden" ref={scrollAreaRef}>
+      <div className="p-2 sm:p-3 md:p-4 space-y-2 sm:space-y-3 md:space-y-4 min-h-full">
         {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
         ))}
@@ -39,6 +39,8 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             isLoading
           />
         )}
+        {/* Spacer to ensure proper scrolling */}
+        <div className="h-4" />
       </div>
     </ScrollArea>
   );

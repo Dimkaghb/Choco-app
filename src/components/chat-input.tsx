@@ -108,11 +108,11 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
   };
 
   return (
-    <div className="p-4 border-t border-border bg-background">
+    <div className="p-2 sm:p-3 md:p-4 border-t border-border bg-background">
       <form ref={formRef} onSubmit={handleSubmit} className="relative">
         {/* File attachments preview */}
         {attachments.length > 0 && (
-          <div className="mb-3">
+          <div className="mb-2">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">
                 Прикрепленные файлы ({attachments.length})
@@ -139,7 +139,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
         <Textarea
           name="prompt"
           placeholder="Спросите ChocoAnalyze AI..."
-          className="pr-28 min-h-[48px] resize-none"
+          className="pr-16 sm:pr-20 md:pr-22 min-h-[38px] sm:min-h-[42px] resize-none text-sm sm:text-base"
           rows={1}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -149,7 +149,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
           }}
           disabled={isLoading}
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+        <div className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 sm:gap-1">
           <input
             type="file"
             name="files"
@@ -169,10 +169,10 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
             disabled={isLoading}
             title="Прикрепить файлы"
           >
-            <Paperclip className="w-5 h-5" />
+            <Paperclip className="w-4 h-4" />
           </Button>
           <Button type="submit" size="icon" disabled={isLoading}>
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4" />
           </Button>
         </div>
       </form>

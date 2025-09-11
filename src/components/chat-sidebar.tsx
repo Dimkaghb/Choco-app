@@ -141,16 +141,16 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
   };
 
   return (
-    <div className="flex flex-col h-full p-4 bg-background/50 border-r border-border">
-      <div className="flex justify-between items-center pb-4 border-b border-border">
-        <h1 className="text-xl font-bold font-headline">ChocoAnalyze AI</h1>
+    <div className="flex flex-col h-full p-3 bg-background/50 border-r border-border">
+      <div className="flex justify-between items-center pb-3 border-b border-border">
+        <h1 className="text-lg font-bold font-headline">ChocoAnalyze AI</h1>
         <Button variant="ghost" size="icon" onClick={handleCreateChat}>
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
         </Button>
       </div>
       
-      <div className="relative mt-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+      <div className="relative mt-3">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input 
           placeholder="Поиск чатов..." 
           className="pl-10" 
@@ -159,15 +159,15 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
         />
       </div>
       
-      <ScrollArea className="flex-1 mt-4">
+      <ScrollArea className="flex-1 mt-3">
         {isLoading ? (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-12 bg-muted/50 rounded-lg animate-pulse" />
+              <div key={i} className="h-10 bg-muted/50 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : filteredChats.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center mt-8">
+          <p className="text-sm text-muted-foreground text-center mt-6">
             {searchQuery ? 'Чаты не найдены' : 'Нет недавних чатов'}
           </p>
         ) : (
@@ -176,13 +176,13 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
               <div
                 key={chat.id}
                 className={cn(
-                  "group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
+                  "group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
                   currentChatId === chat.id && "bg-muted"
                 )}
                 onClick={() => onChatSelect(chat.id)}
               >
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <MessageSquare className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     {editingChatId === chat.id ? (
                       <Input
@@ -196,7 +196,7 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
                             setEditingChatId(null);
                           }
                         }}
-                        className="h-6 text-sm"
+                        className="h-5 text-xs"
                         autoFocus
                         onClick={(e) => e.stopPropagation()}
                       />
@@ -216,22 +216,22 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <MoreHorizontal className="w-4 h-4" />
+                      <MoreHorizontal className="w-3 h-3" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={(e) => startEditing(chat, e)}>
-                      <Edit2 className="w-4 h-4 mr-2" />
+                      <Edit2 className="w-3 h-3 mr-2" />
                       Переименовать
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={(e) => handleDeleteChat(chat.id, e)}
                       className="text-destructive"
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
+                      <Trash2 className="w-3 h-3 mr-2" />
                       Удалить
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -242,16 +242,16 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
         )}
       </ScrollArea>
       
-      <div className="pt-4 border-t border-border space-y-3">
+      <div className="pt-3 border-t border-border space-y-2">
         <p className="text-xs text-muted-foreground text-center">
           {chats.length} {chats.length === 1 ? 'чат' : 'чатов'}
         </p>
         
         {/* User info and logout */}
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4 text-primary" />
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <User className="w-3 h-3 text-primary" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">
@@ -262,13 +262,13 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreHorizontal className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                <MoreHorizontal className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={logout} className="text-destructive">
-                <LogOut className="w-4 h-4 mr-2" />
+                <LogOut className="w-3 h-3 mr-2" />
                 Выйти
               </DropdownMenuItem>
             </DropdownMenuContent>

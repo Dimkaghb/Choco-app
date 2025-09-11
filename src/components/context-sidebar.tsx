@@ -84,8 +84,8 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
   ];
 
   return (
-    <div className={`fixed right-0 top-0 h-full z-40 transition-all duration-300 hidden md:block ${
-      isCollapsed ? 'w-16' : 'w-80'
+    <div className={`fixed right-0 top-0 h-full z-50 transition-all duration-300 hidden lg:block ${
+      isCollapsed ? 'w-16' : 'w-80 xl:w-96'
     }`}>
       {/* Glass background with blur effect */}
       <div className="h-full bg-black/20 backdrop-blur-xl border-l border-white/10">

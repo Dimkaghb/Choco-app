@@ -461,19 +461,32 @@ Please analyze the provided data and respond to the user's request. The data has
   }, [currentChatId]);
 
   return (
-      <div className="flex h-screen w-full bg-background text-foreground relative">
-        <aside className="hidden md:flex md:w-80 lg:w-96 h-full">
+      <div className="flex h-screen w-full bg-background text-foreground relative overflow-hidden">
+        {/* Left Sidebar - Hidden on mobile, shown on tablet+ */}
+        <aside className="hidden md:flex md:w-64 lg:w-80 xl:w-96 h-full z-10 flex-shrink-0">
           <ChatSidebar 
             currentChatId={currentChatId}
             onChatSelect={handleChatSelect}
             onNewChat={handleNewChat}
           />
         </aside>
-        <main className={`flex flex-1 flex-col h-full transition-all duration-300 ${isContextSidebarCollapsed ? 'md:pr-16' : 'md:pr-80'}`}>
+        
+        {/* Main Chat Area - Full width on mobile, adjusted on desktop */}
+        <main className={`flex flex-1 flex-col h-full min-w-0 transition-all duration-300 z-20 ${
+          isContextSidebarCollapsed 
+            ? 'mr-0 sm:mr-2 md:mr-16 lg:mr-20' 
+            : 'mr-0 sm:mr-2 md:mr-80 lg:mr-80 xl:mr-96'
+        }`}>
           <ChatHeader currentChat={currentChat} />
-          <ChatMessages messages={messages} isLoading={isLoading} />
-          <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
+          <div className="flex-1 overflow-hidden px-2 sm:px-4">
+            <ChatMessages messages={messages} isLoading={isLoading} />
+          </div>
+          <div className="px-2 sm:px-4 pb-2 sm:pb-4">
+            <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
+          </div>
         </main>
+        
+        {/* Right Context Sidebar - Hidden on mobile and small tablets */}
         <ContextSidebar onCollapseChange={setIsContextSidebarCollapsed} />
       </div>
     );
