@@ -8,6 +8,8 @@ services:
       dockerfile: dockerfile
     container_name: choco-backend
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
     environment:
       - HOST=0.0.0.0
       - PORT=8000
