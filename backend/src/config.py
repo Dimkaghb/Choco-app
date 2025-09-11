@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     API_VERSION: str = "1.0.0"
     
     # Server Configuration
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    HOST: str = os.getenv("HOST", "127.0.0.1")  # Default to localhost, can be overridden via env
+    PORT: int = int(os.getenv("PORT", "8000"))
     
     # CORS Configuration
     ALLOWED_ORIGINS: List[str] = [
