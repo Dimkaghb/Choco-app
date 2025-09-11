@@ -24,7 +24,9 @@ class Settings(BaseSettings):
         "http://127.0.0.1:9002",
         "http://127.0.0.1:3000",
         "http://frontend:9002",  # Docker container name
-        "http://choco-frontend:9002"  # Docker container name from compose
+        "http://choco-frontend:9002",  # Docker container name from compose
+        "http://freedom-analysis.chocodev.kz:9002",  # Production frontend
+        "https://freedom-analysis.chocodev.kz:9002"  # Production frontend HTTPS
     ]
     
     # File Processing Configuration

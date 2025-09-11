@@ -33,7 +33,7 @@ class BackendService {
   private config: BackendConfig;
 
   constructor(config: BackendConfig = {
-    baseUrl: 'http://localhost:8000',
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
     timeout: 180000  // Increased to 3 minutes
   }) {
     this.config = config;
