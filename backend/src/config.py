@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     API_VERSION: str = "1.0.0"
     
     # Server Configuration
-    HOST: str = os.getenv("HOST", "127.0.0.1")  # Default to localhost, can be overridden via env
+    HOST: str = os.getenv("HOST", "0.0.0.0")  # Default to all interfaces for Docker, can be overridden via env
     PORT: int = int(os.getenv("PORT", "8000"))
     
     # CORS Configuration
@@ -22,7 +22,9 @@ class Settings(BaseSettings):
         "http://localhost:9002",
         "http://localhost:3000",
         "http://127.0.0.1:9002",
-        "http://127.0.0.1:3000"
+        "http://127.0.0.1:3000",
+        "http://frontend:9002",  # Docker container name
+        "http://choco-frontend:9002"  # Docker container name from compose
     ]
     
     # File Processing Configuration
@@ -55,9 +57,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 90
     
     # MongoDB Configuration
-    MONGODB_URL: str = "mongodb://localhost:27017"
-    DATABASE_NAME: str = "Choco"
-    USERS_COLLECTION: str = "Choco_users"
+    MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    DATABASE_NAME: str = os.getenv("DATABASE_NAME", "Choco")
+    USERS_COLLECTION: str = os.getenv("USERS_COLLECTION", "Choco_users")
     
     model_config = {
         "env_file": ".env",

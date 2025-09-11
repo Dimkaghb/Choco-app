@@ -16,13 +16,17 @@ async def connect_to_mongo():
     try:
         mongodb.client = AsyncIOMotorClient(
             settings.MONGODB_URL,
-            connectTimeoutMS=settings.MONGODB_CONNECT_TIMEOUT,
-            serverSelectionTimeoutMS=settings.MONGODB_SERVER_SELECTION_TIMEOUT,
-            maxPoolSize=50,  # Maximum number of connections in the pool
-            minPoolSize=5,   # Minimum number of connections in the pool
-            maxIdleTimeMS=30000,  # Close connections after 30 seconds of inactivity
+            connectTimeoutMS=60000,  # 60 seconds for initial connection
+            serverSelectionTimeoutMS=60000,  # 60 seconds for server selection
+            socketTimeoutMS=60000,  # 60 seconds for socket operations
+            maxPoolSize=10,  # Reduced pool size for container environments
+            minPoolSize=1,   # Minimum connections
+            maxIdleTimeMS=90000,  # Keep connections alive longer
             retryWrites=True,  # Enable retryable writes
-            retryReads=True    # Enable retryable reads
+            retryReads=True,   # Enable retryable reads
+            heartbeatFrequencyMS=10000,  # More frequent heartbeats
+            directConnection=False,  # Use replica set routing
+            readPreference='primaryPreferred'  # Prefer primary but allow secondary reads
         )
         mongodb.database = mongodb.client[settings.DATABASE_NAME]
         
