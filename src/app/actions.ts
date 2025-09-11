@@ -5,8 +5,6 @@ import { z } from "zod";
 
 const sendMessageActionSchema = z.object({
   prompt: z.string(),
-  image: z.instanceof(File).optional(), // Deprecated: use files instead
-  files: z.array(z.instanceof(File)).optional(),
   sessionId: z.string(),
 });
 
@@ -16,22 +14,20 @@ export async function sendMessageAction(formData: FormData) {
   
   // Get the old image field for backward compatibility
   const imageFile = formData.get("image");
-  if (imageFile && imageFile instanceof File && imageFile.size > 0) {
-    allFiles.push(imageFile);
+  if (imageFile && typeof imageFile === 'object' && 'size' in imageFile && imageFile.size > 0) {
+    allFiles.push(imageFile as File);
   }
   
   // Get all files from the files field
   const filesFromFormData = formData.getAll("files");
   // Filter to ensure we only get File objects, not strings
   const validFiles = filesFromFormData.filter((file): file is File => 
-    file instanceof File && file.size > 0
+    typeof file === 'object' && file !== null && 'size' in file && (file as any).size > 0
   );
   allFiles.push(...validFiles);
 
   const validatedData = sendMessageActionSchema.safeParse({
     prompt: formData.get("prompt"),
-    image: imageFile instanceof File ? imageFile : undefined,
-    files: allFiles,
     sessionId: formData.get("sessionId"),
   });
 

@@ -2,6 +2,7 @@ import pandas as pd
 import json
 import io
 import asyncio
+import numpy as np
 from typing import Dict, Any, List
 from pathlib import Path
 from fastapi import HTTPException
@@ -66,7 +67,7 @@ class FileProcessor:
                     "data_types": df.dtypes.astype(str).to_dict(),
                     "stats": self._get_summary_stats(df)
                 },
-                "sample_data": df.head(settings.MAX_SAMPLE_ROWS).to_dict('records')
+                "sample_data": self._clean_data_for_json(df.head(settings.MAX_SAMPLE_ROWS).to_dict('records'))
             }
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Error processing CSV: {str(e)}")
@@ -84,7 +85,7 @@ class FileProcessor:
                     "rows": len(df),
                     "columns": len(df.columns),
                     "column_names": df.columns.tolist(),
-                    "sample_data": df.head(settings.MAX_SAMPLE_ROWS).to_dict('records')
+                    "sample_data": self._clean_data_for_json(df.head(settings.MAX_SAMPLE_ROWS).to_dict('records'))
                 }
             
             return {
@@ -180,11 +181,45 @@ class FileProcessor:
     def _get_summary_stats(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Get summary statistics for DataFrame"""
         numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+        
+        # Get missing values and handle NaN
+        missing_values = df.isnull().sum().to_dict()
+        missing_values = {k: int(v) if not pd.isna(v) else 0 for k, v in missing_values.items()}
+        
+        # Get numeric stats and handle NaN/infinity values
+        numeric_stats = {}
+        if numeric_cols:
+            stats_df = df.describe()
+            numeric_stats = stats_df.to_dict()
+            
+            # Clean NaN and infinity values
+            for col, col_stats in numeric_stats.items():
+                for stat_name, stat_value in col_stats.items():
+                    if pd.isna(stat_value) or np.isinf(stat_value):
+                        numeric_stats[col][stat_name] = None
+                    elif isinstance(stat_value, (np.integer, np.floating)):
+                        numeric_stats[col][stat_name] = float(stat_value)
+        
         return {
             "numeric_columns": numeric_cols,
-            "missing_values": df.isnull().sum().to_dict(),
-            "numeric_stats": df.describe().to_dict() if numeric_cols else {}
+            "missing_values": missing_values,
+            "numeric_stats": numeric_stats
         }
+    
+    def _clean_data_for_json(self, data: Any) -> Any:
+        """Clean data to make it JSON serializable by handling NaN and infinity values"""
+        if isinstance(data, dict):
+            return {k: self._clean_data_for_json(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._clean_data_for_json(item) for item in data]
+        elif pd.isna(data) or (isinstance(data, (float, np.floating)) and np.isinf(data)):
+            return None
+        elif isinstance(data, (np.integer, np.floating)):
+            return float(data)
+        elif isinstance(data, np.bool_):
+            return bool(data)
+        else:
+            return data
     
     def _get_json_sample(self, data: Any, max_items: int = 5) -> Any:
         """Get a sample of JSON data"""

@@ -31,6 +31,7 @@ class Settings(BaseSettings):
         ".csv", ".xlsx", ".xls", ".json", ".txt", ".log"
     ]
     
+    
     # AI API Configuration
     AI_API_URL: str = "https://ai-platform-connect.kassen.space/connect/v1/d82fc727-bb94-4f82-848c-a9be5c779e4a/agent/run"
     AI_API_TIMEOUT: int = 600  # 10 minutes

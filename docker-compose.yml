@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: dockerfile
+    container_name: choco-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/reports:/app/reports
+    networks:
+      - choco-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: choco-frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=9002
+    ports:
+      - "9002:9002"
+    depends_on:
+      - backend
+    networks:
+      - choco-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  choco-network:
+    driver: bridge
+    name: choco-network

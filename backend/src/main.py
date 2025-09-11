@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import asyncio
 
 from .config import settings
 from .file_processing.api import router as file_processing_router
@@ -10,6 +11,7 @@ from .report.api import router as report_router
 from .ai.api import router as ai_router
 from .auth.database import connect_to_mongo, close_mongo_connection
 from .chat.database import create_indexes
+from .report.async_service import async_report_service
 
 
 @asynccontextmanager
@@ -27,6 +29,10 @@ async def lifespan(app: FastAPI):
         # Create database indexes
         await create_indexes()
         print("Database indexes created")
+        
+        # Start report cleanup task
+        asyncio.create_task(async_report_service.start_cleanup_task())
+        print("Report cleanup task started")
     except Exception as e:
         print(f"Failed to connect to MongoDB: {e}")
         raise e

@@ -139,6 +139,3 @@ class AsyncReportService:
 
 # Global instance
 async_report_service = AsyncReportService()
-
-# Start cleanup task when module is imported
-asyncio.create_task(async_report_service.start_cleanup_task())
