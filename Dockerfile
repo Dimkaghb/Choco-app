@@ -7,11 +7,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-# Copy source code
+# Copy source code (excluding .env files first)
 COPY . .
 
-# Copy .env file if it exists (optional)
-COPY .env* ./
+# Copy .env file explicitly to ensure it's not overwritten
+COPY .env ./
 
 # Build the application
 RUN npm run build
