@@ -3,8 +3,9 @@ from datetime import datetime
 from bson import ObjectId
 from pymongo.errors import DuplicateKeyError
 import uuid
-from chat.database import get_chats_collection, get_messages_collection
-from chat.models import (
+import asyncio
+from .database import get_chats_collection, get_messages_collection
+from .models import (
     ChatCreate, ChatUpdate, ChatResponse, ChatWithMessages,
     MessageCreate, MessageResponse, ChatInDB, MessageInDB
 )
@@ -13,11 +14,38 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ChatService:
-    """Service for managing chats and messages"""
+    """Service for managing chats and messages with optimized async operations"""
+    
+    def __init__(self):
+        self._ensure_indexes_created = False
+    
+    async def _ensure_indexes(self):
+        """Ensure database indexes are created for better performance"""
+        if self._ensure_indexes_created:
+            return
+            
+        try:
+            chats_collection = get_chats_collection()
+            messages_collection = get_messages_collection()
+            
+            # Create indexes for better query performance
+            await asyncio.gather(
+                chats_collection.create_index([("user_id", 1), ("updated_at", -1)]),
+                chats_collection.create_index("session_id"),
+                messages_collection.create_index([("chat_id", 1), ("timestamp", 1)]),
+                messages_collection.create_index("role")
+            )
+            
+            self._ensure_indexes_created = True
+            logger.info("Database indexes ensured for chat service")
+            
+        except Exception as e:
+            logger.warning(f"Could not create indexes: {e}")
     
     async def create_chat(self, user_id: str, chat_data: ChatCreate) -> ChatResponse:
         """Create a new chat for a user"""
         try:
+            await self._ensure_indexes()
             chats_collection = get_chats_collection()
             
             now = datetime.utcnow()
@@ -46,6 +74,7 @@ class ChatService:
     async def get_user_chats(self, user_id: str, limit: int = 50, skip: int = 0) -> List[ChatResponse]:
         """Get all chats for a user, ordered by last update"""
         try:
+            await self._ensure_indexes()
             chats_collection = get_chats_collection()
             
             cursor = chats_collection.find(

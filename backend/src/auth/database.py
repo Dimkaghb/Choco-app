@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import ConnectionFailure
-from config import settings
+from ..config import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,14 +12,23 @@ class MongoDB:
 mongodb = MongoDB()
 
 async def connect_to_mongo():
-    """Create database connection"""
+    """Create database connection with optimized settings"""
     try:
-        mongodb.client = AsyncIOMotorClient(settings.MONGODB_URL)
+        mongodb.client = AsyncIOMotorClient(
+            settings.MONGODB_URL,
+            connectTimeoutMS=settings.MONGODB_CONNECT_TIMEOUT,
+            serverSelectionTimeoutMS=settings.MONGODB_SERVER_SELECTION_TIMEOUT,
+            maxPoolSize=50,  # Maximum number of connections in the pool
+            minPoolSize=5,   # Minimum number of connections in the pool
+            maxIdleTimeMS=30000,  # Close connections after 30 seconds of inactivity
+            retryWrites=True,  # Enable retryable writes
+            retryReads=True    # Enable retryable reads
+        )
         mongodb.database = mongodb.client[settings.DATABASE_NAME]
         
         # Test the connection
         await mongodb.client.admin.command('ping')
-        logger.info("Successfully connected to MongoDB")
+        logger.info("Successfully connected to MongoDB with optimized settings")
         
     except ConnectionFailure as e:
         logger.error(f"Failed to connect to MongoDB: {e}")

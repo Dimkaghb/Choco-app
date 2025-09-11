@@ -1,3 +1,21 @@
+"""Excel Report Generator
+
+This module provides functionality to generate Excel reports from JSON configurations.
+
+Main functions:
+- generate_excel_from_json_input(json_input): Creates Excel file from JSON containing both config and filename
+- generate_excel_report_from_dict(config, output_path): Creates Excel file from separate config dict and path
+- generate_excel_report(config_json, output_path): Creates Excel file from JSON config string and path
+
+JSON Input Format for generate_excel_from_json_input:
+{
+    "filename": "report_name",  // .xlsx extension will be added automatically
+    "config": {
+        // Excel configuration object
+    }
+}
+"""
+
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils import get_column_letter
@@ -6,6 +24,7 @@ from typing import Dict, List, Any, Optional
 import json
 import os
 from datetime import datetime
+from .structure_parser import normalize_color
 
 
 class ExcelReportGenerator:
@@ -17,6 +36,7 @@ class ExcelReportGenerator:
     def __init__(self):
         self.workbook = None
         self.worksheets = {}
+        self.warnings = []  # Collect warnings instead of failing
     
     def create_report(self, config: Dict[str, Any], output_path: str) -> str:
         """
@@ -55,6 +75,9 @@ class ExcelReportGenerator:
                 os.makedirs(output_dir, exist_ok=True)
             self.workbook.save(output_path)
             
+            # Return path and warnings if any
+            if self.warnings:
+                print(f"Report generated with warnings: {'; '.join(self.warnings)}")
             return output_path
             
         except Exception as e:
@@ -115,7 +138,7 @@ class ExcelReportGenerator:
         Apply worksheet properties
         """
         if 'tab_color' in properties:
-            ws.sheet_properties.tabColor = properties['tab_color']
+            ws.sheet_properties.tabColor = normalize_color(properties['tab_color'])
         if 'zoom' in properties:
             ws.sheet_view.zoomScale = properties['zoom']
     
@@ -132,8 +155,9 @@ class ExcelReportGenerator:
                 self._apply_cell_style(cell, header['style'])
             else:
                 # Default header style
-                cell.font = Font(bold=True, color="FFFFFF")
-                cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+                cell.font = Font(bold=True, color=normalize_color("FFFFFF"))
+                default_color = normalize_color("366092")
+                cell.fill = PatternFill(start_color=default_color, end_color=default_color, fill_type="solid")
                 cell.alignment = Alignment(horizontal="center", vertical="center")
     
     def _add_data(self, ws, data: List[List[Any]], headers: List[Dict[str, Any]]):
@@ -180,14 +204,15 @@ class ExcelReportGenerator:
                 size=font_config.get('size', 11),
                 bold=font_config.get('bold', False),
                 italic=font_config.get('italic', False),
-                color=font_config.get('color', '000000')
+                color=normalize_color(font_config.get('color', '000000'))
             )
         
         if 'fill' in style:
             fill_config = style['fill']
+            fill_color = normalize_color(fill_config.get('color', 'FFFFFF'))
             cell.fill = PatternFill(
-                start_color=fill_config.get('color', 'FFFFFF'),
-                end_color=fill_config.get('color', 'FFFFFF'),
+                start_color=fill_color,
+                end_color=fill_color,
                 fill_type="solid"
             )
         
@@ -232,15 +257,24 @@ class ExcelReportGenerator:
         Apply alternating row colors
         """
         start_row = config.get('start_row', 2)
-        end_row = config.get('end_row', ws.max_row)
-        color1 = config.get('color1', 'FFFFFF')
-        color2 = config.get('color2', 'F2F2F2')
+        
+        # Handle None values for max_row and max_column
+        max_row = ws.max_row if ws.max_row is not None else 1
+        max_column = ws.max_column if ws.max_column is not None else 1
+        
+        end_row = config.get('end_row', max_row)
+        color1 = normalize_color(config.get('color1', 'FFFFFF'))
+        color2 = normalize_color(config.get('color2', 'F2F2F2'))
+        
+        # Skip if there are no rows to format
+        if end_row < start_row or max_row < 1 or max_column < 1:
+            return
         
         for row_idx in range(start_row, end_row + 1):
             color = color1 if row_idx % 2 == 0 else color2
             fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
             
-            for col_idx in range(1, ws.max_column + 1):
+            for col_idx in range(1, max_column + 1):
                 ws.cell(row=row_idx, column=col_idx).fill = fill
     
     def _add_charts(self, ws, charts_config: List[Dict[str, Any]]):
@@ -277,14 +311,28 @@ class ExcelReportGenerator:
                     if '!' not in data_range:
                         # Add sheet name if not present
                         data_range = f"{ws.title}!{data_range}"
-                    data = Reference(ws, range_string=data_range)
-                    chart.add_data(data, titles_from_data=True)
+                    
+                    # Validate data range format
+                    if not self._validate_data_range(data_range):
+                        warning_msg = f"Invalid data range format '{data_range}': Must be in format 'SheetName!A1:B10'"
+                        self.warnings.append(warning_msg)
+                        print(f"Warning: {warning_msg}")
+                    else:
+                        data = Reference(ws, range_string=data_range)
+                        chart.add_data(data, titles_from_data=True)
                 except Exception as e:
-                    print(f"Warning: Could not add chart data range '{data_range}': {e}")
+                    warning_msg = f"Could not add chart data range '{data_range}': {str(e)}"
+                    self.warnings.append(warning_msg)
+                    print(f"Warning: {warning_msg}")
             
             # Set chart position
             position = chart_config.get('position', 'E2')
-            ws.add_chart(chart, position)
+            try:
+                ws.add_chart(chart, position)
+            except Exception as e:
+                warning_msg = f"Could not add chart at position '{position}': {str(e)}"
+                self.warnings.append(warning_msg)
+                print(f"Warning: {warning_msg}")
     
     def _auto_adjust_columns(self, ws):
         """
@@ -303,6 +351,25 @@ class ExcelReportGenerator:
             
             adjusted_width = min(max_length + 2, 50)  # Cap at 50 characters
             ws.column_dimensions[column_letter].width = adjusted_width
+    
+    def _validate_data_range(self, data_range: str) -> bool:
+        """
+        Validate data range format
+        Expected format: SheetName!A1:B10 or A1:B10
+        """
+        try:
+            import re
+            # Pattern for Excel range: optional sheet name, cell range
+            pattern = r'^([^!]+!)?[A-Z]+\d+:[A-Z]+\d+$'
+            return bool(re.match(pattern, data_range))
+        except Exception:
+            return False
+    
+    def get_warnings(self) -> List[str]:
+        """
+        Get list of warnings generated during report creation
+        """
+        return self.warnings.copy()
 
 
 def generate_excel_report(config_json: str, output_path: str) -> str:
@@ -344,79 +411,125 @@ def generate_excel_report_from_dict(config: Dict[str, Any], output_path: str) ->
         raise Exception(f"Error generating report: {str(e)}")
 
 
+def generate_excel_from_json_input(json_input: str) -> str:
+    """
+    Generate Excel report from JSON input containing both config and filename
+    
+    Args:
+        json_input: JSON string containing 'config' and 'filename' fields
+        
+    Returns:
+        str: Path to created Excel file
+    """
+    try:
+        input_data = json.loads(json_input)
+        
+        if 'config' not in input_data:
+            raise Exception("JSON input must contain 'config' field")
+        if 'filename' not in input_data:
+            raise Exception("JSON input must contain 'filename' field")
+        
+        config = input_data['config']
+        filename = input_data['filename']
+        
+        # Ensure filename has .xlsx extension
+        if not filename.endswith('.xlsx'):
+            filename += '.xlsx'
+        
+        generator = ExcelReportGenerator()
+        return generator.create_report(config, filename)
+        
+    except json.JSONDecodeError as e:
+        raise Exception(f"Invalid JSON input: {str(e)}")
+    except Exception as e:
+        raise Exception(f"Error generating report: {str(e)}")
+
+
 # Example usage and testing
 if __name__ == "__main__":
-    # Example configuration
-    example_config = {
-        "properties": {
-            "title": "Sample Report",
-            "creator": "Report Generator",
-            "description": "Generated Excel report"
-        },
-        "sheets": [
-            {
-                "name": "Sales Data",
-                "properties": {
-                    "tab_color": "1F4E79",
-                    "zoom": 100
-                },
-                "headers": [
-                    {
-                        "title": "Product",
-                        "style": {
-                            "font": {"bold": True, "color": "FFFFFF"},
-                            "fill": {"color": "366092"},
-                            "alignment": {"horizontal": "center"}
-                        }
+    # Example JSON input with both config and filename
+    example_json_input = {
+        "filename": "sample_report",
+        "config": {
+            "properties": {
+                "title": "Sample Report",
+                "creator": "Report Generator",
+                "description": "Generated Excel report"
+            },
+            "sheets": [
+                {
+                    "name": "Sales Data",
+                    "properties": {
+                        "tab_color": "1F4E79",
+                        "zoom": 100
                     },
-                    {
-                        "title": "Sales",
-                        "style": {
-                            "font": {"bold": True, "color": "FFFFFF"},
-                            "fill": {"color": "366092"},
-                            "alignment": {"horizontal": "center"}
+                    "headers": [
+                        {
+                            "title": "Product",
+                            "style": {
+                                "font": {"bold": True, "color": "FFFFFF"},
+                                "fill": {"color": "366092"},
+                                "alignment": {"horizontal": "center"}
+                            }
+                        },
+                        {
+                            "title": "Sales",
+                            "style": {
+                                "font": {"bold": True, "color": "FFFFFF"},
+                                "fill": {"color": "366092"},
+                                "alignment": {"horizontal": "center"}
+                            }
+                        },
+                        {
+                            "title": "Revenue",
+                            "style": {
+                                "font": {"bold": True, "color": "FFFFFF"},
+                                "fill": {"color": "366092"},
+                                "alignment": {"horizontal": "center"}
+                            }
                         }
+                    ],
+                    "data": [
+                        ["Product A", 100, 5000],
+                        ["Product B", 150, 7500],
+                        ["Product C", 200, 10000]
+                    ],
+                    "formatting": {
+                        "alternating_rows": {
+                            "start_row": 2,
+                            "color1": "FFFFFF",
+                            "color2": "F2F2F2"
+                        },
+                        "freeze_panes": "A2"
                     },
-                    {
-                        "title": "Revenue",
-                        "style": {
-                            "font": {"bold": True, "color": "FFFFFF"},
-                            "fill": {"color": "366092"},
-                            "alignment": {"horizontal": "center"}
+                    "charts": [
+                        {
+                            "type": "bar",
+                            "title": "Sales by Product",
+                            "data_range": "A1:C4",
+                            "position": "E2",
+                            "x_axis_title": "Products",
+                            "y_axis_title": "Sales"
                         }
-                    }
-                ],
-                "data": [
-                    ["Product A", 100, 5000],
-                    ["Product B", 150, 7500],
-                    ["Product C", 200, 10000]
-                ],
-                "formatting": {
-                    "alternating_rows": {
-                        "start_row": 2,
-                        "color1": "FFFFFF",
-                        "color2": "F2F2F2"
-                    },
-                    "freeze_panes": "A2"
-                },
-                "charts": [
-                    {
-                        "type": "bar",
-                        "title": "Sales by Product",
-                        "data_range": "A1:C4",
-                        "position": "E2",
-                        "x_axis_title": "Products",
-                        "y_axis_title": "Sales"
-                    }
-                ]
-            }
-        ]
+                    ]
+                }
+            ]
+        }
     }
     
-    # Generate sample report
-    output_file = "sample_report.xlsx"
+    # Convert to JSON string and generate report
+    json_input_str = json.dumps(example_json_input)
+    
     try:
-        result = generate_excel_report_from_dict(example_config, output_file)
+        result = generate_excel_from_json_input(json_input_str)
         print(f"Report generated successfully: {result}")
     except Exception as e:
         print(f"Error: {e}")
+    
+    # Also demonstrate the original method for backward compatibility
+    print("\n--- Testing original method ---")
+    try:
+        result2 = generate_excel_report_from_dict(example_json_input["config"], "legacy_sample_report.xlsx")
+        print(f"Legacy method report generated successfully: {result2}")
+    except Exception as e:
+        print(f"Legacy method error: {e}")

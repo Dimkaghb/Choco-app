@@ -75,7 +75,7 @@ export async function sendMessageAction(formData: FormData) {
  * Optimized action for sending messages without files directly to AI API
  * Bypasses backend processing for faster responses
  */
-export async function sendDirectMessageAction(prompt: string, sessionId: string) {
+export async function sendDirectMessageAction(prompt: string, sessionId: string, options?: { rawResponse?: boolean }) {
   if (!prompt || prompt.trim().length === 0) {
     return {
       failure: {
@@ -93,7 +93,7 @@ export async function sendDirectMessageAction(prompt: string, sessionId: string)
   }
 
   try {
-    const result = await sendDirectMessage(prompt, sessionId);
+    const result = await sendDirectMessage(prompt, sessionId, options);
     return { response: result.response };
   } catch (e) {
     console.error(e);

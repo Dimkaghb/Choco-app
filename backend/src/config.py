@@ -33,11 +33,20 @@ class Settings(BaseSettings):
     
     # AI API Configuration
     AI_API_URL: str = "https://ai-platform-connect.kassen.space/connect/v1/d82fc727-bb94-4f82-848c-a9be5c779e4a/agent/run"
-    AI_API_TIMEOUT: int = 180  # 3 minutes
+    AI_API_TIMEOUT: int = 600  # 10 minutes
+    
+    # Server Timeout Configuration
+    UVICORN_TIMEOUT_KEEP_ALIVE: int = 600  # 10 minutes
+    UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN: int = 60  # 60 seconds
+    REQUEST_TIMEOUT: int = 600  # 10 minutes for long-running operations
+    
+    # Database Connection Timeout
+    MONGODB_CONNECT_TIMEOUT: int = 30000  # 30 seconds
+    MONGODB_SERVER_SELECTION_TIMEOUT: int = 30000  # 30 seconds
     
     # Data Processing Configuration
-    MAX_SAMPLE_ROWS: int = 10
-    MAX_TEXT_PREVIEW: int = 1000
+    MAX_SAMPLE_ROWS: int = 1000
+    MAX_TEXT_PREVIEW: int = 100000
     
     # Authentication Configuration
     SECRET_KEY: str = "your-secret-key-change-this-in-production"

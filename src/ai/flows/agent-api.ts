@@ -72,6 +72,8 @@ export async function sendToAgent(input: SendToAgentInput): Promise<SendToAgentO
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(validatedInput),
+      // Increase timeout for long-running AI operations
+      signal: AbortSignal.timeout(300000), // 5 minutes
     });
 
     if (!response.ok) {
@@ -107,7 +109,7 @@ export async function sendToAgent(input: SendToAgentInput): Promise<SendToAgentO
  * Sends a simple text message directly to the AI API without files.
  * This is optimized for fast responses when no file processing is needed.
  */
-export async function sendDirectMessage(message: string, sessionId: string): Promise<SendToAgentOutput> {
+export async function sendDirectMessage(message: string, sessionId: string, options?: { rawResponse?: boolean }): Promise<SendToAgentOutput> {
   const baseUrl = process.env.VITE_API_URL;
   
   if (!baseUrl) {
@@ -130,6 +132,8 @@ export async function sendDirectMessage(message: string, sessionId: string): Pro
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestData),
+      // Increase timeout for long-running AI operations
+      signal: AbortSignal.timeout(300000), // 5 minutes
     });
 
     if (!response.ok) {
@@ -140,7 +144,16 @@ export async function sendDirectMessage(message: string, sessionId: string): Pro
     const data = await response.json();
     
     // Debug: Log the actual API response structure
-    console.log('AI API Response (sendToAgent):', JSON.stringify(data, null, 2));
+    console.log('AI API Response (sendDirectMessage):', JSON.stringify(data, null, 2));
+    
+    // If rawResponse is requested (for reports), return the data directly
+    if (options?.rawResponse) {
+      // Extract the actual content from the API response for reports
+      const actualContent = data.content || data.response || data.message || data;
+      return {
+        response: typeof actualContent === 'string' ? actualContent : JSON.stringify(actualContent),
+      };
+    }
     
     // Return the full JSON response for processing in chat-ui.tsx
     // This allows the UI to handle both text content and visualization data

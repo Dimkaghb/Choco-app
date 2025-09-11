@@ -1,17 +1,22 @@
 import pandas as pd
 import json
 import io
+import asyncio
 from typing import Dict, Any, List
 from pathlib import Path
 from fastapi import HTTPException
+from concurrent.futures import ThreadPoolExecutor
 
-from config import settings
+from ..config import settings
 
 
 class FileProcessor:
-    """Handles file processing using pandas and other libraries"""
+    """Handles file processing using pandas and other libraries with async support"""
     
-    def process_file(self, file_content: bytes, filename: str, content_type: str) -> Dict[str, Any]:
+    def __init__(self):
+        self.executor = ThreadPoolExecutor(max_workers=4)
+    
+    async def process_file(self, file_content: bytes, filename: str, content_type: str) -> Dict[str, Any]:
         """Main method to process different file types"""
         file_extension = Path(filename).suffix.lower()
         
@@ -22,16 +27,19 @@ class FileProcessor:
             )
         
         try:
+            # Run file processing in thread pool for better async performance
+            loop = asyncio.get_event_loop()
+            
             if file_extension == '.csv':
-                return self._process_csv(file_content)
+                return await loop.run_in_executor(self.executor, self._process_csv, file_content)
             elif file_extension in ['.xlsx', '.xls']:
-                return self._process_excel(file_content)
+                return await loop.run_in_executor(self.executor, self._process_excel, file_content)
             elif file_extension == '.json':
-                return self._process_json(file_content)
+                return await loop.run_in_executor(self.executor, self._process_json, file_content)
             elif file_extension in ['.txt', '.log']:
-                return self._process_text(file_content)
+                return await loop.run_in_executor(self.executor, self._process_text, file_content)
             else:
-                return self._process_generic(file_content, file_extension)
+                return await loop.run_in_executor(self.executor, self._process_generic, file_content, file_extension)
                 
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Error processing {file_extension} file: {str(e)}")

@@ -1,8 +1,8 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, Form
 from typing import Dict, Any
 
-from file_processing.models import ProcessFileResponse
-from file_processing.service import file_processing_service
+from .models import ProcessFileResponse
+from .service import file_processing_service
 
 
 router = APIRouter(prefix="/file-processing", tags=["file-processing"])
@@ -10,7 +10,8 @@ router = APIRouter(prefix="/file-processing", tags=["file-processing"])
 
 @router.post("/process-file", response_model=ProcessFileResponse)
 async def process_file(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    prompt: str = Form("Extract and analyze file content")
 ) -> ProcessFileResponse:
     """
     Process uploaded file and return structured data for frontend to send to AI API
@@ -33,7 +34,7 @@ async def process_file(
         )
     
     # Process the file
-    result = await file_processing_service.process_uploaded_file(file)
+    result = await file_processing_service.process_uploaded_file(file, prompt)
     return result
 
 

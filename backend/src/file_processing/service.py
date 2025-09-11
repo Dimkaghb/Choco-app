@@ -5,9 +5,9 @@ from typing import Dict, Any, List
 from pathlib import Path
 from fastapi import HTTPException, UploadFile
 
-from config import settings
-from file_processing.models import ProcessFileResponse, FileInfo, ProcessedData
-from file_processing.utils import FileProcessor
+from ..config import settings
+from .models import ProcessFileResponse, FileInfo, ProcessedData
+from .utils import FileProcessor
 
 
 class FileProcessingService:
@@ -16,7 +16,7 @@ class FileProcessingService:
     def __init__(self):
         self.file_processor = FileProcessor()
     
-    async def process_uploaded_file(self, file: UploadFile) -> ProcessFileResponse:
+    async def process_uploaded_file(self, file: UploadFile, prompt: str = "Extract and analyze file content") -> ProcessFileResponse:
         """
         Process uploaded file and return structured data
         
@@ -45,8 +45,8 @@ class FileProcessingService:
                 "extension": Path(file.filename).suffix.lower()
             }
             
-            # Process file content
-            processed_data = self.file_processor.process_file(
+            # Process file content asynchronously
+            processed_data = await self.file_processor.process_file(
                 file_content, file.filename, file.content_type
             )
             

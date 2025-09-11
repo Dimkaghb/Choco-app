@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from datetime import timedelta
-from auth.models import UserCreate, UserLogin, Token, UserResponse
-from auth.user_service import user_service
-from auth.auth_utils import create_access_token
-from auth.dependencies import get_current_active_user
-from config import settings
+from .models import UserCreate, UserLogin, Token, UserResponse
+from .user_service import user_service
+from .auth_utils import create_access_token
+from .dependencies import get_current_active_user
+from ..config import settings
 import logging
 
 logger = logging.getLogger(__name__)

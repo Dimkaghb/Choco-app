@@ -10,6 +10,34 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+def normalize_color(color_value: str) -> str:
+    """
+    Normalize color value by removing # prefix and ensuring proper format
+    
+    Args:
+        color_value: Color string that may contain # prefix
+        
+    Returns:
+        str: Normalized color string without # prefix
+    """
+    if not color_value:
+        return '000000'
+    
+    # Convert to string and strip whitespace
+    color_str = str(color_value).strip()
+    
+    # Remove # prefix if present
+    if color_str.startswith('#'):
+        color_str = color_str[1:]
+    
+    # Ensure we have a valid hex color (6 characters)
+    if len(color_str) == 6 and all(c in '0123456789ABCDEFabcdef' for c in color_str):
+        return color_str.upper()
+    
+    # Default to black if invalid
+    return '000000'
+
+
 class CellType(Enum):
     """Enumeration for different cell types"""
     HEADER = "header"
@@ -84,7 +112,7 @@ class CellStyle:
         """Convert to openpyxl Font object"""
         if not self.font:
             return None
-        color_value = self.font.get('color', '000000')
+        color_value = normalize_color(self.font.get('color', '000000'))
         # Ensure color is in proper aRGB format (8 characters)
         if color_value and len(str(color_value)) == 6:
             color_value = 'FF' + str(color_value)  # Add alpha channel
@@ -102,9 +130,10 @@ class CellStyle:
         """Convert to openpyxl PatternFill object"""
         if not self.fill:
             return None
+        color_value = normalize_color(self.fill.get('color', 'FFFFFF'))
         return PatternFill(
-            start_color=self.fill.get('color', 'FFFFFF'),
-            end_color=self.fill.get('color', 'FFFFFF'),
+            start_color=color_value,
+            end_color=color_value,
             fill_type=self.fill.get('pattern', 'solid')
         )
     
@@ -114,7 +143,7 @@ class CellStyle:
             return None
         
         def create_side(side_config: Dict[str, Any]) -> Side:
-            color_value = side_config.get('color', '000000')
+            color_value = normalize_color(side_config.get('color', '000000'))
             # Ensure color is in proper aRGB format (8 characters)
             if color_value and len(str(color_value)) == 6:
                 color_value = 'FF' + str(color_value)  # Add alpha channel

@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
+import freeDomLogo from "@/assets/freedomlogo.png"
+import reportImg from "@/assets/Frame_2.png"
+import dataImg from "@/assets/dataImg.png"
 import { 
   ArrowRight, 
   Command, 
@@ -23,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Auth } from "@/components/auth";
 import heroImg from "@/assets/hero.png";
+import interfaceImg from "@/assets/chartInt.png"
 
 
 // Features configuration
@@ -31,26 +35,20 @@ const features = [
     title: "Продвинутый аналитический интерфейс",
     description: "Профессиональные инструменты анализа данных с визуализацией в реальном времени и расширенными возможностями построения графиков.",
     icon: <BarChart3 className="w-6 h-6" />,
-    image: "/lovable-uploads/86329743-ee49-4f2e-96f7-50508436273d.png"
+    image: interfaceImg
   },
   {
-    title: "Управление проектами",
-    description: "Отслеживайте свои аналитические проекты и контролируйте прогресс с помощью нашей комплексной панели управления.",
+    title: "Управление и создание отчетов",
+    description: "Отслеживайте свои аналитические проекты и работайте с отчетностями быстро и качественно.",
     icon: <Wallet className="w-6 h-6" />,
-    image: "/lovable-uploads/7335619d-58a9-41ad-a233-f7826f56f3e9.png"
+    image: reportImg
   },
   {
-    title: "Безопасность и верификация",
-    description: "Ведущие в отрасли меры безопасности с процессом верификации для защиты ваших данных и аналитических проектов.",
+    title: "Работа с данными",
+    description: "Эффективная работа с данными любого объема и формата, включая импорт, экспорт и преобразование данных для анализа.",
     icon: <ShieldCheck className="w-6 h-6" />,
-    image: "/lovable-uploads/b6436838-5c1a-419a-9cdc-1f9867df073d.png"
+    image: dataImg
   },
-  {
-    title: "Аналитика производительности",
-    description: "Детальная аналитика и система оценки качества для принятия обоснованных решений на основе данных.",
-    icon: <ArrowUpDown className="w-6 h-6" />,
-    image: "/lovable-uploads/79f2b901-8a4e-42a5-939f-fae0828e0aef.png"
-  }
 ];
 
 // Testimonials data
@@ -241,59 +239,59 @@ const Navigation = ({ onStartTrading }: { onStartTrading: () => void }) => {
 };
 
 // LogoCarousel Component
-const LogoCarousel = () => {
-  const logos = [
-    "/lovable-uploads/5830bd79-3511-41dc-af6c-8db32d91fc2c.png",
-    "/lovable-uploads/bb50362c-6879-4868-bbc9-c6e051fd8d7d.png",
-    "/lovable-uploads/1e2a48dc-059b-4919-a1ed-44685d771a32.png",
-    "/lovable-uploads/bf56a0c6-48e4-49f7-b286-8e3fda9a3385.png",
-    "/lovable-uploads/7cc724d4-3e14-4e7c-9e7a-8d613fde54d0.png",
-  ];
+// const LogoCarousel = () => {
+//   const logos = [
+//     {freeDomLogo},
+//     {freeDomLogo},
+//     {freeDomLogo},
+//     {freeDomLogo},
+//     {freeDomLogo},
+//   ];
 
-  const extendedLogos = [...logos, ...logos, ...logos];
+//   const extendedLogos = [...logos, ...logos, ...logos];
 
-  return (
-    <div className="w-full overflow-hidden bg-background/50 backdrop-blur-sm py-12 mt-20">
-      <motion.div 
-        className="flex space-x-16"
-        initial={{ opacity: 0, x: "0%" }}
-        animate={{
-          opacity: 1,
-          x: "-50%"
-        }}
-        transition={{
-          opacity: { duration: 0.5 },
-          x: {
-            duration: 15,
-            repeat: Infinity,
-            ease: "linear",
-            delay: 0.5
-          }
-        }}
-        style={{
-          width: "fit-content",
-          display: "flex",
-          gap: "4rem"
-        }}
-      >
-        {extendedLogos.map((logo, index) => (
-          <motion.img
-            key={`logo-${index}`}
-            src={logo}
-            alt={`Partner logo ${index + 1}`}
-            className="h-8 object-contain"
-            initial={{ opacity: 0.5 }}
-            whileHover={{ 
-              opacity: 1,
-              scale: 1.05,
-              transition: { duration: 0.2 }
-            }}
-          />
-        ))}
-      </motion.div>
-    </div>
-  );
-};
+//   return (
+//     <div className="w-full overflow-hidden bg-background/50 backdrop-blur-sm py-12 mt-20">
+//       <motion.div 
+//         className="flex space-x-16"
+//         initial={{ opacity: 0, x: "0%" }}
+//         animate={{
+//           opacity: 1,
+//           x: "-50%"
+//         }}
+//         transition={{
+//           opacity: { duration: 0.5 },
+//           x: {
+//             duration: 15,
+//             repeat: Infinity,
+//             ease: "linear",
+//             delay: 0.5
+//           }
+//         }}
+//         style={{
+//           width: "fit-content",
+//           display: "flex",
+//           gap: "4rem"
+//         }}
+//       >
+//         {extendedLogos.map((logo, index) => (
+//           <motion.img
+//             key={`logo-${index}`}
+//             src={typeof logo === 'string' ? logo : logo.freeDomLogo.src}
+//             alt={`Partner logo ${index + 1}`}
+//             className="h-8 object-contain"
+//             initial={{ opacity: 0.5 }}
+//             whileHover={{ 
+//               opacity: 1,
+//               scale: 1.05,
+//               transition: { duration: 0.2 }
+//             }}
+//           />
+//         ))}
+//       </motion.div>
+//     </div>
+//   );
+// }; 
 
 // FeatureTab Component
 const FeatureTab = ({ icon, title, description, isActive }: {
@@ -407,7 +405,7 @@ const FeaturesSection = () => {
                 className="mt-0 h-full"
               >
                 <FeatureContent
-                  image={feature.image}
+                  image={typeof feature.image === 'string' ? feature.image : feature.image.src}
                   title={feature.title}
                 />
               </TabsContent>
@@ -783,7 +781,7 @@ const Landing = () => {
       </motion.section>
     
       {/* Logo Carousel */}
-      <LogoCarousel />
+      {/* <LogoCarousel /> */}
 
       {/* Features Section */}
       <div id="features" className="bg-black">

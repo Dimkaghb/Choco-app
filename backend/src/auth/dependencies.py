@@ -1,9 +1,9 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
-from auth.auth_utils import verify_token, extract_email_from_token
-from auth.user_service import user_service
-from auth.models import UserResponse
+from .auth_utils import verify_token, extract_email_from_token
+from .user_service import user_service
+from .models import UserResponse
 
 # Security scheme
 security = HTTPBearer()

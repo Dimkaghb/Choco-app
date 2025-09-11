@@ -2,9 +2,9 @@ from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 from pymongo.errors import DuplicateKeyError
-from auth.database import get_users_collection
-from auth.models import UserCreate, UserInDB, UserResponse
-from auth.auth_utils import get_password_hash, verify_password
+from .database import get_users_collection
+from .models import UserCreate, UserInDB, UserResponse
+from .auth_utils import get_password_hash, verify_password
 import logging
 
 logger = logging.getLogger(__name__)

@@ -51,10 +51,59 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
   const [promptText, setPromptText] = useState('');
   const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [reportReady, setReportReady] = useState(false);
+  const [reportFilename, setReportFilename] = useState<string>('');
+  const [reportProgress, setReportProgress] = useState(0);
+  const [currentJobId, setCurrentJobId] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { currentChatDocuments } = useDocuments();
   const { currentChat } = useChatStore();
+
+  const pollJobStatus = async (jobId: string, filename: string) => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const maxAttempts = 60; // 5 minutes with 5-second intervals
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      try {
+        const statusResponse = await fetch(`${API_BASE_URL}/report/job-status/${jobId}`);
+        if (!statusResponse.ok) {
+          throw new Error('Failed to check job status');
+        }
+
+        const statusData = await statusResponse.json();
+        
+        if (statusData.status === 'completed') {
+          setReportFilename(filename);
+          setReportReady(true);
+          setReportProgress(100);
+          setCurrentJobId('');
+          
+          // Show warnings if any
+          if (statusData.warnings && statusData.warnings.length > 0) {
+            const warningMessage = `Отчет создан успешно, но с предупреждениями:\n${statusData.warnings.join('\n')}`;
+            console.warn('Report warnings:', statusData.warnings);
+            alert(warningMessage);
+          }
+          
+          return;
+        } else if (statusData.status === 'failed') {
+          throw new Error(statusData.error_message || statusData.error || 'Report generation failed');
+        } else if (statusData.status === 'processing') {
+          setReportProgress(Math.min(90, (attempts / maxAttempts) * 100));
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+        attempts++;
+      } catch (error) {
+        console.error('Error polling job status:', error);
+        throw error;
+      }
+    }
+
+    throw new Error('Report generation timed out');
+  };
 
   // Mock data for analyses - replace with real data
   const mockAnalyses = [
@@ -82,27 +131,234 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
 
   const handleCreateReport = async () => {
     setIsLoading(true);
+    setReportReady(false);
     
     try {
-      // Here you would implement the actual report creation logic
-      console.log('Creating report with:', {
-        previewMode,
-        promptText,
-        additionalFiles,
-        currentChatDocuments,
-        currentChat
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      
+      // Prepare chat messages
+      const messages = currentChat?.messages || [];
+      
+      // Prepare files content
+      const filesContent = [];
+      
+      // Add current chat documents content
+      for (const doc of currentChatDocuments) {
+        try {
+          // Check if we have already processed data from document context
+          if (doc.processedData && doc.processingStatus === 'completed') {
+            // Use the already processed data from document context
+            const structuredContent = JSON.stringify(doc.processedData, null, 2);
+            filesContent.push({
+              name: doc.name,
+              content: `Файл: ${doc.name}\nТип: ${doc.type || 'unknown'}\nРазмер: ${doc.size} bytes\nСтатус обработки: ${doc.processingStatus}\n\nОбработанные данные:\n${structuredContent}`
+            });
+          } else if (doc.processedContent) {
+            // Use processed content if available
+            filesContent.push({
+              name: doc.name,
+              content: `Файл: ${doc.name}\nТип: ${doc.type || 'unknown'}\nРазмер: ${doc.size} bytes\nСтатус обработки: ${doc.processingStatus}\n\nСодержимое:\n${doc.processedContent}`
+            });
+          } else {
+            // If processing is still in progress or failed, include basic info
+            const statusMessage = doc.processingStatus === 'processing' ? 'обрабатывается' : 
+                                doc.processingStatus === 'error' ? 'ошибка обработки' : 'ожидает обработки';
+            filesContent.push({
+              name: doc.name,
+              content: `Файл: ${doc.name}\nТип: ${doc.type || 'unknown'}\nРазмер: ${doc.size} bytes\nСтатус: ${statusMessage}`
+            });
+          }
+        } catch (error) {
+          console.warn(`Could not process file ${doc.name}:`, error);
+          filesContent.push({
+            name: doc.name,
+            content: `File: ${doc.name}, Size: ${doc.size} bytes (processing error: ${error})`
+          });
+        }
+      }
+      
+      // Add additional files content - use backend processing for structured analysis
+      for (const file of additionalFiles) {
+        try {
+          // Check if this is a data file that should be processed by backend
+          const isDataFile = file.name.toLowerCase().endsWith('.csv') ||
+                           file.name.toLowerCase().endsWith('.xlsx') ||
+                           file.name.toLowerCase().endsWith('.xls') ||
+                           file.name.toLowerCase().endsWith('.json') ||
+                           file.type === 'text/csv' ||
+                           file.type === 'application/json' ||
+                           file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                           file.type === 'application/vnd.ms-excel';
+          
+          if (isDataFile) {
+            // Use backend service for structured data processing
+            const { backendService } = await import('@/lib/backend-service');
+            const processResult = await backendService.processFile({
+              file: file,
+              prompt: 'Extract and structure file content for analysis'
+            });
+            
+            if (processResult.success && processResult.processed_data) {
+              // Use the structured data from backend processing
+              const structuredContent = JSON.stringify(processResult.processed_data, null, 2);
+              filesContent.push({
+                name: file.name,
+                content: `Файл: ${file.name}\nТип: ${processResult.file_info?.content_type || file.type}\nРазмер: ${processResult.file_info?.size || file.size} bytes\n\nСтруктурированные данные:\n${structuredContent}`
+              });
+            } else {
+              // Fallback to text reading if backend processing fails
+              const content = await file.text();
+              filesContent.push({
+                name: file.name,
+                content: `${content}\n\n(Note: Backend processing failed: ${processResult.error || 'unknown error'})`
+              });
+            }
+          } else {
+            // For non-data files, read as text
+            const content = await file.text();
+            filesContent.push({
+              name: file.name,
+              content: content
+            });
+          }
+        } catch (error) {
+          console.warn(`Could not read file ${file.name}:`, error);
+          filesContent.push({
+            name: file.name,
+            content: `File: ${file.name}, Size: ${file.size} bytes (content could not be read: ${error})`
+          });
+        }
+      }
+      
+      // Add custom prompt if provided
+      const finalPrompt = promptText ? 
+        `Создай детальный отчет. Дополнительные требования: ${promptText}` : 
+        'Создай детальный отчет';
+      
+      // Step 1: Generate report configuration using VITE API (like chat messages)
+      const { sendDirectMessageAction } = await import('@/app/actions');
+      
+      // Prepare the AI prompt with chat context and files
+      let aiPrompt = `${finalPrompt}\n\nСообщения чата:\n`;
+      
+      // Add chat messages to prompt
+      for (const msg of messages) {
+        const role = msg.role || 'user';
+        const content = msg.content || '';
+        aiPrompt += `${role}: ${content}\n`;
+      }
+      
+      // Add files content to prompt
+      if (filesContent.length > 0) {
+        aiPrompt += "\nСодержимое файлов:\n";
+        for (const fileInfo of filesContent) {
+          aiPrompt += `Файл ${fileInfo.name}:\n${fileInfo.content}\n\n`;
+        }
+      }
+      
+      aiPrompt += "\nСоздай JSON конфигурацию для Excel отчета на основе этих данных. Ответ должен содержать только валидный JSON без дополнительного текста.";
+      
+      // Send to VITE API with rawResponse option for reports
+      const aiResponse = await sendDirectMessageAction(
+        aiPrompt,
+        currentChat?.id || 'report-generation',
+        { rawResponse: true }
+      );
+      
+      if (aiResponse.failure) {
+        throw new Error(aiResponse.failure.server || aiResponse.failure.prompt || 'Failed to get AI response');
+      }
+      
+      // Parse the AI response to extract JSON configuration
+      let reportConfig;
+      try {
+        // With rawResponse option, we get the actual content directly
+        reportConfig = JSON.parse(aiResponse.response);
+      } catch (jsonError) {
+        // If JSON parsing fails, try to extract JSON from the response
+        const jsonMatch = aiResponse.response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            reportConfig = JSON.parse(jsonMatch[0]);
+          } catch (extractError) {
+            throw new Error('AI response does not contain valid JSON configuration');
+          }
+        } else {
+          throw new Error('AI response does not contain JSON configuration');
+        }
+      }
+      
+      if (!reportConfig) {
+        throw new Error('Failed to generate report configuration');
+      }
+      
+      // Step 2: Generate Excel file from configuration
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const filename = `report_${timestamp}.xlsx`;
+      
+      const excelResponse = await fetch(`${API_BASE_URL}/report/generate-excel-async`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          config: reportConfig,
+          filename: filename
+        })
       });
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (!excelResponse.ok) {
+        throw new Error(`Failed to generate Excel file: ${excelResponse.statusText}`);
+      }
       
-      // Close modal after successful creation
-      onClose();
+      const excelData = await excelResponse.json();
+      
+      if (!excelData.success) {
+        throw new Error('Failed to start report generation');
+      }
+      
+      // Start polling for job status
+      const jobId = excelData.job_id;
+      await pollJobStatus(jobId, filename);
+      
     } catch (error) {
       console.error('Failed to create report:', error);
+      alert(`Ошибка создания отчета: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDownloadReport = async () => {
+    if (!reportFilename) return;
+    
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const downloadUrl = `${API_BASE_URL}/report/download/${reportFilename}`;
+      
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = reportFilename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Failed to download report:', error);
+      alert('Ошибка при скачивании отчета');
+    }
+  };
+
+  const handleCloseModal = () => {
+    setReportReady(false);
+    setReportFilename('');
+    setPromptText('');
+    setAdditionalFiles([]);
+    setPreviewMode(null);
+    setReportProgress(0);
+    setCurrentJobId('');
+    setIsLoading(false);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -115,7 +371,7 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleCloseModal}
       />
       
       {/* Report Creation Modal */}
@@ -129,7 +385,7 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
         <div className="relative bg-black/50 backdrop-blur-xl rounded-xl border border-white/10 p-8">
           {/* Close button */}
           <button
-            onClick={onClose}
+            onClick={handleCloseModal}
             className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/10 transition-colors z-10"
           >
             <X className="w-5 h-5 text-gray-400" />
@@ -341,15 +597,46 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
             </div>
           </div>
 
-          {/* Create Button */}
-          <div className="mt-8 flex justify-center">
-            <Button
-              onClick={handleCreateReport}
-              disabled={isLoading || (!previewMode && additionalFiles.length === 0)}
-              className="px-12 py-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-medium transition-all duration-300 shadow-md hover:shadow-primary/15"
-            >
-              {isLoading ? 'Создание отчета...' : 'Создать отчет'}
-            </Button>
+          {/* Create/Download Button */}
+          <div className="mt-8 flex flex-col items-center gap-4">
+            {reportReady ? (
+              <>
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-green-400 mb-2">Ваш отчет готов!</p>
+                  <p className="text-sm text-gray-400">{reportFilename}</p>
+                </div>
+                <Button
+                  onClick={handleDownloadReport}
+                  className="px-12 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-medium transition-all duration-300 shadow-md hover:shadow-green-500/15"
+                >
+                  Скачать отчет
+                </Button>
+              </>
+            ) : (
+              <div className="space-y-4">
+                {isLoading && reportProgress > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm text-gray-400">
+                      <span>Генерация отчёта</span>
+                      <span>{Math.round(reportProgress)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${reportProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                <Button
+                  onClick={handleCreateReport}
+                  disabled={isLoading}
+                  className="px-12 py-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-medium transition-all duration-300 shadow-md hover:shadow-primary/15"
+                >
+                  {isLoading ? (reportProgress > 0 ? `Генерация отчёта... ${Math.round(reportProgress)}%` : 'Запуск генерации...') : 'Создать отчет'}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </motion.div>

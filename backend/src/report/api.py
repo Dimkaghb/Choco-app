@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, File, UploadFile, Form
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import os
 import tempfile
 from datetime import datetime
 import json
 
 from .excel_generator import generate_excel_report_from_dict
+from .async_service import async_report_service, JobStatus
 
 router = APIRouter(prefix="/report", tags=["reports"])
 
@@ -21,6 +22,30 @@ class ReportGenerationResponse(BaseModel):
     success: bool
     message: str
     file_path: Optional[str] = None
+
+class AsyncReportRequest(BaseModel):
+    config: Dict[str, Any]
+    filename: Optional[str] = None
+
+class AsyncReportResponse(BaseModel):
+    success: bool
+    job_id: str
+    message: str
+
+class JobStatusResponse(BaseModel):
+    job_id: str
+    status: str
+    created_at: str
+    updated_at: str
+    progress: int
+    filename: str
+    error_message: Optional[str] = None
+    file_path: Optional[str] = None
+    warnings: Optional[List[str]] = None
+
+
+# ChatReportRequest and ChatReportResponse models removed
+# Report generation now handled through VITE API in frontend
 
 
 @router.post("/generate-excel", response_model=ReportGenerationResponse)
@@ -65,6 +90,66 @@ async def generate_excel_report_endpoint(request: ReportGenerationRequest):
             status_code=400,
             detail=f"Error generating Excel report: {str(e)}"
         )
+
+
+@router.post("/generate-excel-async", response_model=AsyncReportResponse)
+async def generate_excel_report_async(request: AsyncReportRequest):
+    """
+    Start asynchronous Excel report generation
+    
+    Args:
+        request: AsyncReportRequest containing the configuration and optional filename
+        
+    Returns:
+        AsyncReportResponse with job_id for tracking progress
+    """
+    try:
+        job_id = await async_report_service.create_report_job(
+            config=request.config,
+            filename=request.filename
+        )
+        
+        return AsyncReportResponse(
+            success=True,
+            job_id=job_id,
+            message="Report generation started. Use job_id to check status."
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error starting report generation: {str(e)}"
+        )
+
+@router.get("/job-status/{job_id}", response_model=JobStatusResponse)
+async def get_job_status(job_id: str):
+    """
+    Get status of report generation job
+    
+    Args:
+        job_id: Job ID returned from /generate-excel-async
+        
+    Returns:
+        JobStatusResponse with current job status and progress
+    """
+    job_status = await async_report_service.get_job_status(job_id)
+    
+    if not job_status:
+        raise HTTPException(
+            status_code=404,
+            detail="Job not found"
+        )
+    
+    return JobStatusResponse(**job_status)
+
+# Note: The /generate-from-chat endpoint has been removed.
+# Report generation now follows this flow:
+# 1. Frontend sends chat data to VITE API for AI processing
+# 2. Frontend receives AI response with JSON configuration
+# 3. Frontend can choose between:
+#    a) /generate-excel for immediate generation (may timeout on large reports)
+#    b) /generate-excel-async for background processing with job tracking
+# This ensures proper separation of concerns and follows the established AI communication pattern.
 
 
 @router.get("/download/{filename}")
