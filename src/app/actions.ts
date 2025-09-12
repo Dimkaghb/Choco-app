@@ -41,7 +41,7 @@ export async function sendMessageAction(formData: FormData) {
     };
   }
 
-  const { prompt, files, sessionId } = validatedData.data;
+  const { prompt, sessionId } = validatedData.data;
 
   try {
     // Create the agent input with the new API structure
