@@ -138,7 +138,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
         )}
         <Textarea
           name="prompt"
-          placeholder="Спросите ChocoAnalyze AI..."
+          placeholder="Спросите Freedom AI Analysis..."
           className="pr-16 sm:pr-20 md:pr-22 min-h-[38px] sm:min-h-[42px] resize-none text-sm sm:text-base"
           rows={1}
           onKeyDown={(e) => {

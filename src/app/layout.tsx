@@ -6,8 +6,13 @@ import { AuthProvider } from '@/hooks/use-auth';
 import { DocumentProvider } from '@/contexts/document-context';
 
 export const metadata: Metadata = {
-  title: 'ChocoAnalyze - Продвинутая платформа для анализа данных',
+  title: 'Freedom AI Analysis - Продвинутая платформа для анализа данных',
   description: 'Опыт беспрепятственного анализа данных с продвинутыми функциями, аналитикой в реальном времени и безопасностью институционального уровня.',
+  icons: {
+    icon: ['/favicon.ico', '/logo.png'],
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({

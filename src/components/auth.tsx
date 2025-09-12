@@ -91,7 +91,7 @@ export const Auth = ({ isOpen, onClose }: AuthProps) => {
             <div className="flex items-center justify-center gap-2 mb-4">
               <Command className="w-6 h-6 text-primary" />
               <span className="font-bold text-xl">
-                Choco<span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Analyze</span>
+                Freedom AI<span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"> Analysis</span>
               </span>
             </div>
             <h2 className="text-2xl font-semibold mb-2">

@@ -143,7 +143,7 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
   return (
     <div className="flex flex-col h-full p-3 bg-background/50 border-r border-border">
       <div className="flex justify-between items-center pb-3 border-b border-border">
-        <h1 className="text-lg font-bold font-headline">ChocoAnalyze AI</h1>
+        <h1 className="text-lg font-bold font-headline">Freedom AI Analysis</h1>
         <Button variant="ghost" size="icon" onClick={handleCreateChat}>
           <Plus className="w-4 h-4" />
         </Button>

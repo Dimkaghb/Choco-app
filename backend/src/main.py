@@ -80,12 +80,11 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        app, 
+        "src.main:app", 
         host=settings.HOST, 
         port=settings.PORT,
         timeout_keep_alive=settings.UVICORN_TIMEOUT_KEEP_ALIVE,
         timeout_graceful_shutdown=settings.UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN,
-        workers=1,  # Single worker for development
         reload=True,  # Auto-reload on changes
         access_log=True,  # Enable access logging
         log_level="info"  # Set log level

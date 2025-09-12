@@ -28,7 +28,7 @@ export function ChatHeader({ currentChat }: ChatHeaderProps) {
         </Avatar>
         <div className="min-w-0 flex-1">
           <p className="font-bold text-base sm:text-lg font-headline truncate">
-            {currentChat ? currentChat.title : 'ChocoAnalyze AI Помощник'}
+            {currentChat ? currentChat.title : 'Freedom AI Analysis Помощник'}
           </p>
           <p className="text-xs sm:text-sm text-muted-foreground truncate">
             {currentChat 

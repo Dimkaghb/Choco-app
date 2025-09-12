@@ -63,7 +63,7 @@ const testimonials = [
     name: "Сара Джонсон",
     role: "Руководитель отдела аналитики",
     image: "https://avatars.githubusercontent.com/u/2345678?v=4",
-    content: "Инструменты корпоративного уровня ChocoAnalyze изменили нашу аналитическую стратегию. Интеграция API и автоматизированные функции сэкономили нам бесчисленные часы."
+    content: "Инструменты корпоративного уровня Freedom AI Analysis изменили нашу аналитическую стратегию. Интеграция API и автоматизированные функции сэкономили нам бесчисленные часы."
   },
   {
     name: "Дэвид Уилсон",
@@ -75,7 +75,7 @@ const testimonials = [
     name: "Эмили Чжан",
     role: "Data Scientist",
     image: "https://avatars.githubusercontent.com/u/4567890?v=4",
-    content: "Мы видим замечательные улучшения в эффективности анализа с момента перехода на ChocoAnalyze. Умная обработка данных и визуализация особенно впечатляют."
+    content: "Мы видим замечательные улучшения в эффективности анализа с момента перехода на Freedom AI Analysis. Умная обработка данных и визуализация особенно впечатляют."
   },
   {
     name: "Хэймс Родригес",
@@ -164,7 +164,7 @@ const Navigation = ({ onStartTrading }: { onStartTrading: () => void }) => {
         <nav className="flex items-center justify-between h-full">
           <div className="flex items-center gap-2">
             <Command className="w-5 h-5 text-primary" />
-            <span className="font-bold text-base">Choco<span className="text-gradient">Analyze</span></span>
+            <span className="font-bold text-base">Freedom AI<span className="text-gradient"> Analysis</span></span>
           </div>
 
           {/* Desktop Navigation */}
@@ -490,7 +490,7 @@ const TestimonialsSection = () => {
         >
           <h2 className="text-5xl font-normal mb-4">Доверяют аналитики</h2>
           <p className="text-muted-foreground text-lg">
-            Присоединяйтесь к тысячам довольных аналитиков на ChocoAnalyze
+            Присоединяйтесь к тысячам довольных аналитиков на Freedom AI Analysis
           </p>
         </motion.div>
 
