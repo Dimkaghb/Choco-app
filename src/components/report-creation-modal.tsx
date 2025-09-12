@@ -380,7 +380,7 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ duration: 0.3 }}
-        className="relative w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-4xl mx-4 max-h-[85vh] overflow-y-auto"
       >
         <div className="relative bg-black/50 backdrop-blur-xl rounded-xl border border-white/10 p-8">
           {/* Close button */}
@@ -392,38 +392,38 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
           </button>
 
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <FileText className="w-6 h-6 text-primary" />
-              <span className="font-bold text-xl">
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <FileText className="w-5 h-5 text-primary" />
+              <span className="font-bold text-lg">
                 Создание <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">отчета</span>
               </span>
             </div>
-            <h2 className="text-2xl font-semibold mb-2">
+            <h2 className="text-xl font-semibold mb-2">
               Создать новый отчет
             </h2>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-xs">
               Создайте детальный отчет на основе ваших данных и анализов
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Your Data Section */}
               <CardSpotlight>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Database className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Ваши данные</h3>
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Database className="w-4 h-4 text-primary" />
+                    <h3 className="text-base font-semibold">Ваши данные</h3>
                   </div>
-                  <div className="space-y-3 max-h-40 overflow-y-auto">
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
                     {currentChatDocuments.length > 0 ? (
                       currentChatDocuments.map((doc) => (
-                        <div key={doc.id} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-                          <File className="w-4 h-4 text-primary" />
+                        <div key={doc.id} className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
+                          <File className="w-3 h-3 text-primary" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{doc.name}</p>
+                            <p className="text-xs font-medium truncate">{doc.name}</p>
                             <p className="text-xs text-gray-400">
                               {(doc.size / 1024 / 1024).toFixed(2)} MB
                             </p>
@@ -431,9 +431,9 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
                         </div>
                       ))
                     ) : (
-                      <div className="text-center py-8 text-gray-400">
-                        <Database className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Нет данных</p>
+                      <div className="text-center py-6 text-gray-400">
+                        <Database className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                        <p className="text-xs">Нет данных</p>
                       </div>
                     )}
                   </div>
@@ -442,51 +442,46 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
 
               {/* Your Analyses Section */}
               <CardSpotlight>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Ваши анализы</h3>
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                      <h3 className="text-base font-semibold">Ваши анализы</h3>
+                    </div>
+                    <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded-full">будет добавлено скоро</span>
                   </div>
-                  <div className="space-y-3 max-h-40 overflow-y-auto">
-                    {mockAnalyses.length > 0 ? (
-                      mockAnalyses.map((analysis) => (
-                        <div key={analysis.id} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-                          <BarChart3 className="w-4 h-4 text-primary" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{analysis.title}</p>
-                            <p className="text-xs text-gray-400">{analysis.date}</p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-gray-400">
-                        <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Нет анализов</p>
-                      </div>
-                    )}
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    <div className="text-center py-6 text-gray-400">
+                      <TrendingUp className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                      <p className="text-xs">Здесь будут ваши анализы</p>
+                    </div>
                   </div>
                 </div>
               </CardSpotlight>
             </div>
 
             {/* Right Column */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Additional Data Section */}
-              <CardSpotlight>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Upload className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Дополнительные данные</h3>
-                  </div>
+               <CardSpotlight>
+                 <div className="p-4">
+                   <div className="flex items-center justify-between mb-3">
+                     <div className="flex items-center gap-2">
+                       <Upload className="w-4 h-4 text-primary" />
+                       <h3 className="text-base font-semibold">Дополнительные данные</h3>
+                     </div>
+                     <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded-full">будет добавлено скоро</span>
+                   </div>
                   
                   <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    variant="outline"
-                    className="w-full mb-4 bg-white/5 border-white/10 hover:bg-white/5 transition-all duration-300"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Загрузить файлы
-                  </Button>
+                     onClick={() => fileInputRef.current?.click()}
+                     variant="outline"
+                     size="sm"
+                     className="w-full mb-3 bg-white/5 border-white/10 hover:bg-white/5 transition-all duration-300"
+                   >
+                     <Upload className="w-3 h-3 mr-2" />
+                     Загрузить файлы
+                   </Button>
                   
                   <input
                     ref={fileInputRef}
@@ -498,23 +493,25 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
                   />
                   
                   {additionalFiles.length > 0 && (
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                    <div className="space-y-1 max-h-24 overflow-y-auto">
                       {additionalFiles.map((file, index) => (
-                        <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10">
-                          <File className="w-4 h-4 text-primary" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{file.name}</p>
-                            <p className="text-xs text-gray-400">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
+                        <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10">
+                          <div className="flex items-center gap-2">
+                            <File className="w-3 h-3 text-primary" />
+                            <div>
+                              <p className="text-xs font-medium">{file.name}</p>
+                              <p className="text-xs text-gray-400">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
                           </div>
                           <Button
                             onClick={() => removeFile(index)}
                             variant="ghost"
                             size="sm"
-                            className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                            className="text-red-400 hover:text-red-300 hover:bg-red-400/10 h-6 w-6 p-0"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3 h-3" />
                           </Button>
                         </div>
                       ))}
@@ -524,28 +521,33 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
               </CardSpotlight>
 
               {/* Preview Section */}
-              <CardSpotlight>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <MessageSquare className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Превью</h3>
-                  </div>
+               <CardSpotlight>
+                 <div className="p-4">
+                   <div className="flex items-center justify-between mb-3">
+                     <div className="flex items-center gap-2">
+                       <MessageSquare className="w-4 h-4 text-primary" />
+                       <h3 className="text-base font-semibold">Превью</h3>
+                     </div>
+                     <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded-full">будет добавлено скоро</span>
+                   </div>
                   
-                  <div className="flex gap-2 mb-4">
+                  <div className="flex gap-2 mb-3">
                     <Button
                       onClick={() => setPreviewMode(previewMode === 'prompt' ? null : 'prompt')}
                       variant={previewMode === 'prompt' ? 'default' : 'outline'}
-                      className={previewMode === 'prompt' ? 'button-gradient' : 'bg-white/5 border-white/10 hover:bg-white/10'}
+                      size="sm"
+                      className={previewMode === 'prompt' ? 'button-gradient text-xs h-8 flex-1' : 'bg-white/5 border-white/10 hover:bg-white/10 text-xs h-8 flex-1'}
                     >
-                      <MessageSquare className="w-4 h-4 mr-2" />
+                      <MessageSquare className="w-3 h-3 mr-1" />
                       Промт
                     </Button>
                     <Button
                       onClick={() => setPreviewMode(previewMode === 'file' ? null : 'file')}
                       variant={previewMode === 'file' ? 'default' : 'outline'}
-                      className={previewMode === 'file' ? 'button-gradient' : 'bg-white/5 border-white/10 hover:bg-white/10'}
+                      size="sm"
+                      className={previewMode === 'file' ? 'button-gradient text-xs h-8 flex-1' : 'bg-white/5 border-white/10 hover:bg-white/10 text-xs h-8 flex-1'}
                     >
-                      <File className="w-4 h-4 mr-2" />
+                      <File className="w-3 h-3 mr-1" />
                       Превью файл
                     </Button>
                   </div>
@@ -564,7 +566,7 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
                         placeholder="Опишите, какой отчет вы хотите создать..."
                         value={promptText}
                         onChange={(e) => setPromptText(e.target.value)}
-                        className="min-h-[120px] bg-white/5 border-white/10 focus:border-primary/30 focus:ring-primary/10 resize-none"
+                        className="min-h-[80px] bg-white/5 border-white/10 focus:border-primary/30 focus:ring-primary/10 resize-none text-sm"
                       />
                     </motion.div>
                   )}
@@ -598,7 +600,7 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
           </div>
 
           {/* Create/Download Button */}
-          <div className="mt-8 flex flex-col items-center gap-4">
+          <div className="mt-6 flex flex-col items-center gap-3">
             {reportReady ? (
               <>
                 <div className="text-center">
@@ -607,8 +609,10 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
                 </div>
                 <Button
                   onClick={handleDownloadReport}
-                  className="px-12 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-medium transition-all duration-300 shadow-md hover:shadow-green-500/15"
+                  size="sm"
+                  className="px-8 py-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-medium transition-all duration-300 shadow-md hover:shadow-green-500/15"
                 >
+                  <FileText className="w-3 h-3 mr-2" />
                   Скачать отчет
                 </Button>
               </>
@@ -631,9 +635,20 @@ export const ReportCreationModal = ({ isOpen, onClose }: ReportCreationModalProp
                 <Button
                   onClick={handleCreateReport}
                   disabled={isLoading}
-                  className="px-12 py-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-medium transition-all duration-300 shadow-md hover:shadow-primary/15"
+                  size="sm"
+                  className="px-8 py-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-medium transition-all duration-300 shadow-md hover:shadow-primary/15"
                 >
-                  {isLoading ? (reportProgress > 0 ? `Генерация отчёта... ${Math.round(reportProgress)}%` : 'Запуск генерации...') : 'Создать отчет'}
+                  {isLoading ? (
+                    <>
+                      <div className="w-3 h-3 mr-2 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      {reportProgress > 0 ? `Генерация отчёта... ${Math.round(reportProgress)}%` : 'Запуск генерации...'}
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-3 h-3 mr-2" />
+                      Создать отчет
+                    </>
+                  )}
                 </Button>
               </div>
             )}

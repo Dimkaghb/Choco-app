@@ -85,14 +85,14 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
 
   return (
     <div className={`fixed right-0 top-0 h-full z-50 transition-all duration-300 hidden lg:block ${
-      isCollapsed ? 'w-16' : 'w-80 xl:w-96'
+      isCollapsed ? 'w-12' : 'w-64'
     }`}>
       {/* Glass background with blur effect */}
       <div className="h-full bg-black/20 backdrop-blur-xl border-l border-white/10">
         {/* Header with collapse button */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <div className="flex items-center justify-between p-3 border-b border-white/10">
           {!isCollapsed && (
-            <h3 className="text-lg font-semibold text-foreground">Контекстное меню</h3>
+            <h3 className="text-base font-semibold text-foreground">Контекст</h3>
           )}
           <Button
             variant="ghost"
@@ -105,34 +105,34 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
         </div>
 
         {/* Menu items */}
-        <div className="p-4 space-y-2">
+        <div className="p-3 space-y-1">
           {menuItems.map((item, index) => (
             <Button
               key={index}
               variant="ghost"
               onClick={item.onClick}
-              className={`w-full justify-start gap-3 h-12 text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-200 ${
-                isCollapsed ? 'px-3' : 'px-4'
+              className={`w-full justify-start gap-2 h-10 text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-200 ${
+                isCollapsed ? 'px-2' : 'px-3'
               } ${item.isActive ? 'bg-white/10 text-foreground' : ''}`}
             >
               {item.icon}
-              {!isCollapsed && <span>{item.label}</span>}
+              {!isCollapsed && <span className="text-sm">{item.label}</span>}
             </Button>
           ))}
         </div>
 
         {/* Document Upload Section */}
         {!isCollapsed && activeSection === 'documents' && (
-          <div className="flex-1 flex flex-col px-4 pb-4 space-y-4 min-h-0 overflow-hidden">
+          <div className="flex-1 flex flex-col px-3 pb-3 space-y-3 min-h-0 overflow-hidden">
             {/* Upload Button */}
             <div className="space-y-2">
               <Button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 transition-all duration-200"
+                className="w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 transition-all duration-200 text-xs h-8"
                 variant="outline"
               >
-                <Upload className="w-4 h-4 mr-2" />
-                Загрузить документ
+                <Upload className="w-3 h-3 mr-1" />
+                Загрузить
               </Button>
               <input
                 ref={fileInputRef}
@@ -147,24 +147,24 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
             {/* Documents List */}
             <div className="space-y-2 flex-1 min-h-0">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-foreground">Загруженные документы</h4>
+                <h4 className="text-xs font-medium text-foreground">Документы</h4>
                 {isProcessing && (
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
                 )}
               </div>
               <div className="flex-1 min-h-0">
-                <ScrollArea className="h-64">
+                <ScrollArea className="h-48">
                   <DocumentList
                     documents={currentChatDocuments}
                     onRemove={handleRemoveDocument}
                     showSource={true}
                     showProcessingStatus={true}
                     isEditable={true}
-                    size="sm"
+                    size="xs"
                   />
                   {currentChatDocuments.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground text-sm">
-                      {currentChat ? 'Нет загруженных документов' : 'Выберите чат для загрузки документов'}
+                    <div className="text-center py-6 text-muted-foreground text-xs">
+                      {currentChat ? 'Нет документов' : 'Выберите чат'}
                     </div>
                   )}
                 </ScrollArea>
@@ -174,17 +174,17 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
         )}
 
         {/* Bottom section with report button */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-white/10">
           <Button
-            className={`w-full bg-gradient-to-r from-primary/80 to-primary hover:from-primary hover:to-primary/90 text-primary-foreground font-medium transition-all duration-300 shadow-lg hover:shadow-primary/25 ${
-              isCollapsed ? 'px-3' : 'px-6'
+            className={`w-full bg-gradient-to-r from-primary/80 to-primary hover:from-primary hover:to-primary/90 text-primary-foreground font-medium transition-all duration-300 shadow-lg hover:shadow-primary/25 h-9 text-xs ${
+              isCollapsed ? 'px-2' : 'px-3'
             }`}
             onClick={() => setIsReportModalOpen(true)}
           >
             {isCollapsed ? (
-              <FileText className="w-5 h-5" />
+              <FileText className="w-4 h-4" />
             ) : (
-              'Создать отчетность'
+              'Отчетность'
             )}
           </Button>
         </div>

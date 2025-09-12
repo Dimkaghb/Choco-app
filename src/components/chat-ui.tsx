@@ -474,8 +474,8 @@ Please analyze the provided data and respond to the user's request. The data has
         {/* Main Chat Area - Full width on mobile, adjusted on desktop */}
         <main className={`flex flex-1 flex-col h-full min-w-0 transition-all duration-300 z-20 ${
           isContextSidebarCollapsed 
-            ? 'mr-0 sm:mr-2 md:mr-16 lg:mr-20' 
-            : 'mr-0 sm:mr-2 md:mr-80 lg:mr-80 xl:mr-96'
+            ? 'mr-0 sm:mr-2 md:mr-12 lg:mr-12' 
+            : 'mr-0 sm:mr-2 md:mr-64 lg:mr-64'
         }`}>
           <ChatHeader currentChat={currentChat} />
           <div className="flex-1 overflow-hidden px-2 sm:px-4">
