@@ -429,7 +429,7 @@ Please analyze the provided data and respond to the user's request. The data has
 
   const handleNewChat = useCallback(() => {
     setCurrentChatId(undefined);
-    setCurrentChat(undefined);
+    setCurrentChat(null);
     setMessages([]);
   }, []);
 

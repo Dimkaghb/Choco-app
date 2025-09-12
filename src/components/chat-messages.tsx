@@ -12,15 +12,23 @@ interface ChatMessagesProps {
 
 export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll to bottom when new messages are added
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
-    }
-  }, [messages]);
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        });
+      }
+    };
+
+    // Small delay to ensure DOM is updated
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timeoutId);
+  }, [messages, isLoading]);
 
   return (
     <ScrollArea className="flex-1 h-full overflow-hidden" ref={scrollAreaRef}>
@@ -39,8 +47,8 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             isLoading
           />
         )}
-        {/* Spacer to ensure proper scrolling */}
-        <div className="h-4" />
+        {/* Invisible element to scroll to */}
+        <div ref={messagesEndRef} className="h-1" />
       </div>
     </ScrollArea>
   );

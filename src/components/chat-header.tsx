@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Chat } from "@/lib/types";
 
 interface ChatHeaderProps {
-  currentChat?: Chat;
+  currentChat?: Chat | null;
 }
 
 export function ChatHeader({ currentChat }: ChatHeaderProps) {
