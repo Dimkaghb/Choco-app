@@ -4,12 +4,24 @@ import dynamic from 'next/dynamic';
 import { ComponentType } from 'react';
 
 interface PlotlyChartProps {
-  data: Array<{
-    label: string;
-    value: number;
+  data: Array<{ 
+    label: string; 
+    value: number; 
+    x?: number; 
+    y?: number; 
+    z?: number;
+    stage?: string;
+    open?: number;
+    high?: number;
+    low?: number;
+    close?: number;
+    parent?: string;
+    ids?: string;
   }>;
-  type: 'bar' | 'line' | 'pie' | 'scatter';
+  type: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram' | 'heatmap' | 'box' | 'violin' | 'waterfall' | 'funnel' | 'treemap' | 'sunburst' | 'candlestick' | 'gauge';
   title?: string;
+  width?: number;
+  height?: number;
   className?: string;
 }
 

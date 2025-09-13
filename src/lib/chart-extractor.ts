@@ -6,8 +6,18 @@ export interface ChartData {
   data: Array<{
     label: string;
     value: number;
+    x?: number;
+    y?: number;
+    z?: number;
+    stage?: string;
+    open?: number;
+    high?: number;
+    low?: number;
+    close?: number;
+    parent?: string;
+    ids?: string;
   }>;
-  type: 'bar' | 'line' | 'pie' | 'scatter';
+  type: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram' | 'heatmap' | 'box' | 'violin' | 'waterfall' | 'funnel' | 'treemap' | 'sunburst' | 'candlestick' | 'gauge';
   title?: string;
 }
 
@@ -73,6 +83,8 @@ function extractChartFromText(text: string): ChartData | null {
 }
 
 function isValidChartData(obj: any): obj is ChartData {
+  const validTypes = ['bar', 'line', 'pie', 'scatter', 'area', 'histogram', 'heatmap', 'box', 'violin', 'waterfall', 'funnel', 'treemap', 'sunburst', 'candlestick', 'gauge'];
+  
   return (
     obj &&
     typeof obj === 'object' &&
@@ -85,7 +97,7 @@ function isValidChartData(obj: any): obj is ChartData {
       typeof item.value === 'number'
     ) &&
     typeof obj.type === 'string' &&
-    ['bar', 'line', 'pie', 'scatter'].includes(obj.type)
+    validTypes.includes(obj.type)
   );
 }
 

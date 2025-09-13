@@ -18,8 +18,21 @@ export interface Message {
     chartData?: any;
   };
   plotlyChart?: {
-    data: any[];
-    type: string;
+    data: Array<{ 
+      label: string; 
+      value: number; 
+      x?: number; 
+      y?: number; 
+      z?: number;
+      stage?: string;
+      open?: number;
+      high?: number;
+      low?: number;
+      close?: number;
+      parent?: string;
+      ids?: string;
+    }>;
+    type: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram' | 'heatmap' | 'box' | 'violin' | 'waterfall' | 'funnel' | 'treemap' | 'sunburst' | 'candlestick' | 'gauge';
     title?: string;
   };
 }
@@ -57,14 +70,40 @@ export interface MessageCreate {
     chartData?: any;
   };
   plotlyChart?: {
-    data: any[];
-    type: string;
+    data: Array<{ 
+      label: string; 
+      value: number; 
+      x?: number; 
+      y?: number; 
+      z?: number;
+      stage?: string;
+      open?: number;
+      high?: number;
+      low?: number;
+      close?: number;
+      parent?: string;
+      ids?: string;
+    }>;
+    type: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram' | 'heatmap' | 'box' | 'violin' | 'waterfall' | 'funnel' | 'treemap' | 'sunburst' | 'candlestick' | 'gauge';
     title?: string;
   };
   // Backend uses snake_case
   plotly_chart?: {
-    data: any[];
-    type: string;
+    data: Array<{ 
+      label: string; 
+      value: number; 
+      x?: number; 
+      y?: number; 
+      z?: number;
+      stage?: string;
+      open?: number;
+      high?: number;
+      low?: number;
+      close?: number;
+      parent?: string;
+      ids?: string;
+    }>;
+    type: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram' | 'heatmap' | 'box' | 'violin' | 'waterfall' | 'funnel' | 'treemap' | 'sunburst' | 'candlestick' | 'gauge';
     title?: string;
   };
 }

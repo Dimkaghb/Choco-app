@@ -70,11 +70,7 @@ export function DocumentList({
   };
 
   if (documents.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground text-sm">
-        Нет загруженных документов
-      </div>
-    );
+    return null;
   }
 
   return (
