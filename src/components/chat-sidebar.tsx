@@ -73,7 +73,7 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
       const newChat = await chatService.createChat(newChatData);
       
       if (newChat && newChat.id) {
-        setChats(prev => [newChat, ...prev]);
+        // Не добавляем чат здесь, так как он будет добавлен через событие chatCreated
         onChatSelect(newChat.id);
         onNewChat();
         toast.success('Новый чат создан');
@@ -244,7 +244,7 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
       
       <div className="pt-3 border-t border-border space-y-2">
         <p className="text-xs text-muted-foreground text-center">
-          {chats.length} {chats.length === 1 ? 'чат' : 'чатов'}
+          {filteredChats.length} {filteredChats.length === 1 ? 'чат' : 'чатов'}
         </p>
         
         {/* User info and logout */}

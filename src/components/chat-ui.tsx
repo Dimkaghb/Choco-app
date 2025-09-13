@@ -87,9 +87,9 @@ export function ChatUI() {
     });
     
     // Ensure we have a current chat before proceeding
-    let chatId: string;
+    let chat: Chat;
     try {
-      chatId = await ensureCurrentChat(prompt);
+      chat = await ensureCurrentChat(prompt);
     } catch (error) {
       console.error('Failed to create chat:', error);
       toast({
@@ -99,6 +99,8 @@ export function ChatUI() {
       });
       return;
     }
+    
+    const chatId = chat.id;
 
     // Upload files to document context
     for (const file of filesToProcess) {
@@ -122,8 +124,8 @@ export function ChatUI() {
 
     let result: any;
     
-    // Get session_id from current chat
-    const sessionId = currentChat?.session_id;
+    // Get session_id from the ensured chat
+    const sessionId = chat.session_id;
     if (!sessionId) {
       toast({
         title: 'Ошибка',
@@ -434,9 +436,9 @@ Please analyze the provided data and respond to the user's request. The data has
   }, []);
 
   // Auto-create chat when user sends first message in a new chat
-  const ensureCurrentChat = useCallback(async (firstMessage: string): Promise<string> => {
-    if (currentChatId) {
-      return currentChatId;
+  const ensureCurrentChat = useCallback(async (firstMessage: string): Promise<Chat> => {
+    if (currentChatId && currentChat) {
+      return currentChat;
     }
     
     try {
@@ -453,12 +455,12 @@ Please analyze the provided data and respond to the user's request. The data has
       // This will cause the sidebar to reload chats and show the new one
       window.dispatchEvent(new CustomEvent('chatCreated', { detail: newChat }));
       
-      return newChat.id;
+      return newChat;
     } catch (error) {
       console.error('Failed to create chat:', error);
       throw error;
     }
-  }, [currentChatId]);
+  }, [currentChatId, currentChat]);
 
   return (
       <div className="flex h-screen w-full bg-background text-foreground relative overflow-hidden">
@@ -491,3 +493,4 @@ Please analyze the provided data and respond to the user's request. The data has
       </div>
     );
 }
+
