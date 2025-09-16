@@ -94,6 +94,13 @@ export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
                     title={message.plotlyChart.title}
                     className="rounded-md border bg-background p-2 sm:p-4 max-w-full overflow-auto"
                   />
+                  {message.plotlyChart.comment && (
+                    <div className="mt-2 px-2 sm:px-4">
+                      <p className="text-sm text-muted-foreground italic">
+                        {message.plotlyChart.comment}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
               {message.charts && message.charts.length > 0 && (
@@ -106,6 +113,13 @@ export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
                         title={chart.title}
                         className="rounded-md border bg-background p-2 sm:p-4 max-w-full overflow-auto"
                       />
+                      {chart.comment && (
+                        <div className="mt-2 px-2 sm:px-4">
+                          <p className="text-sm text-muted-foreground italic">
+                            {chart.comment}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

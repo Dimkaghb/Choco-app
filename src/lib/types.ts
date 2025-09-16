@@ -34,6 +34,7 @@ export interface Message {
     }>;
     type: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram' | 'heatmap' | 'box' | 'violin' | 'waterfall' | 'funnel' | 'treemap' | 'sunburst' | 'candlestick' | 'gauge';
     title?: string;
+    comment?: string;
   };
   // Support for multiple charts from new API format
   charts?: Array<{
@@ -53,6 +54,7 @@ export interface Message {
     }>;
     type: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram' | 'heatmap' | 'box' | 'violin' | 'waterfall' | 'funnel' | 'treemap' | 'sunburst' | 'candlestick' | 'gauge';
     title?: string;
+    comment?: string;
   }>;
 }
 
@@ -105,6 +107,7 @@ export interface MessageCreate {
     }>;
     type: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram' | 'heatmap' | 'box' | 'violin' | 'waterfall' | 'funnel' | 'treemap' | 'sunburst' | 'candlestick' | 'gauge';
     title?: string;
+    comment?: string;
   };
   // Support for multiple charts from new API format
   charts?: Array<{
@@ -124,6 +127,7 @@ export interface MessageCreate {
     }>;
     type: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram' | 'heatmap' | 'box' | 'violin' | 'waterfall' | 'funnel' | 'treemap' | 'sunburst' | 'candlestick' | 'gauge';
     title?: string;
+    comment?: string;
   }>;
   // Backend uses snake_case
   plotly_chart?: {
@@ -143,5 +147,6 @@ export interface MessageCreate {
     }>;
     type: 'bar' | 'line' | 'pie' | 'scatter' | 'area' | 'histogram' | 'heatmap' | 'box' | 'violin' | 'waterfall' | 'funnel' | 'treemap' | 'sunburst' | 'candlestick' | 'gauge';
     title?: string;
+    comment?: string;
   };
 }

@@ -292,7 +292,8 @@ Please analyze the provided data and respond to the user's request. The data has
                 value: item.value || item.y || 0
               })),
               type: chartData.type || 'bar',
-              title: chartData.title
+              title: chartData.title,
+              comment: chartData.comment
             };
           }
         }
@@ -305,7 +306,8 @@ Please analyze the provided data and respond to the user's request. The data has
               value: item.value || item.y || 0
             })),
             type: chart.type || 'bar',
-            title: chart.title
+            title: chart.title,
+            comment: chart.comment
           }));
         }
       } else {
@@ -362,7 +364,8 @@ Please analyze the provided data and respond to the user's request. The data has
               value: item.value || item.y || 0
             })),
             type: chart.type || 'bar',
-            title: chart.title
+            title: chart.title,
+            comment: chart.comment
           }));
         }
       }
