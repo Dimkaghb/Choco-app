@@ -65,8 +65,8 @@ function extractChartFromText(text: string): ChartData | null {
       const parsed = JSON.parse(match);
       
       // Check if this JSON object has chart data
-      if (parsed.chart && isValidChartData(parsed.chart)) {
-        return parsed.chart;
+      if (parsed.charts && isValidChartData(parsed.charts)) {
+        return parsed.charts;
       }
       
       // Check if this JSON object is itself chart data
@@ -114,9 +114,9 @@ export function removeChartFromResponse(responseText: string): string {
     // Try to parse as JSON first
     const parsed = JSON.parse(responseText);
     
-    if (parsed.chart) {
+    if (parsed.charts) {
       // If there's a chart property, remove it and return remaining content
-      const { chart, ...rest } = parsed;
+      const { charts, ...rest } = parsed;
       
       // If there's a message or text field, return that
       if (rest.message) return rest.message;

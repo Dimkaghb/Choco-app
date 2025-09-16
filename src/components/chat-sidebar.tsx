@@ -73,7 +73,8 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
       const newChat = await chatService.createChat(newChatData);
       
       if (newChat && newChat.id) {
-        // Не добавляем чат здесь, так как он будет добавлен через событие chatCreated
+        // Диспатчим событие для обновления сайдбара
+        window.dispatchEvent(new CustomEvent('chatCreated', { detail: newChat }));
         onChatSelect(newChat.id);
         onNewChat();
         toast.success('Новый чат создан');
@@ -141,10 +142,10 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
   };
 
   return (
-    <div className="flex flex-col h-full p-3 bg-background/50 border-r border-border">
+    <div className="flex flex-col h-full w-64 min-w-64 max-w-64 p-3 bg-background/50 border-r border-border">
       <div className="flex justify-between items-center pb-3 border-b border-border">
-        <h1 className="text-lg font-bold font-headline">Freedom AI Analysis</h1>
-        <Button variant="ghost" size="icon" onClick={handleCreateChat}>
+        <h1 className="text-lg font-bold font-headline truncate flex-1 mr-2">Freedom AI Analysis</h1>
+        <Button variant="ghost" size="icon" onClick={handleCreateChat} className="flex-shrink-0">
           <Plus className="w-4 h-4" />
         </Button>
       </div>
@@ -181,9 +182,9 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
                 )}
                 onClick={() => onChatSelect(chat.id)}
               >
-                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                <div className="flex items-center space-x-2 flex-1 min-w-0 overflow-hidden pr-2">
                   <MessageSquare className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 overflow-hidden max-w-[160px]">
                     {editingChatId === chat.id ? (
                       <Input
                         value={editTitle}
@@ -196,14 +197,14 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
                             setEditingChatId(null);
                           }
                         }}
-                        className="h-5 text-xs"
+                        className="h-5 text-xs w-full"
                         autoFocus
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
                       <>
-                        <p className="text-sm font-medium truncate">{chat.title}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm font-medium truncate w-full" title={chat.title}>{chat.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
                           {formatDate(chat.updated_at.toString())}
                         </p>
                       </>
@@ -216,7 +217,7 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <MoreHorizontal className="w-3 h-3" />
@@ -249,12 +250,12 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
         
         {/* User info and logout */}
         <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-1 min-w-0 flex-1">
+          <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
             <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <User className="w-3 h-3 text-primary" />
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium truncate">
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <p className="text-sm font-medium truncate" title={user?.email || 'Пользователь'}>
                 {user?.email || 'Пользователь'}
               </p>
             </div>

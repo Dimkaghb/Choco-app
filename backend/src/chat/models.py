@@ -10,6 +10,7 @@ class MessageCreate(BaseModel):
     attachments: Optional[List[Dict[str, Any]]] = None
     visualization: Optional[Dict[str, Any]] = None
     plotly_chart: Optional[Dict[str, Any]] = None
+    charts: Optional[List[Dict[str, Any]]] = None
 
 class MessageResponse(BaseModel):
     """Message response model"""
@@ -19,6 +20,7 @@ class MessageResponse(BaseModel):
     attachments: Optional[List[Dict[str, Any]]] = None
     visualization: Optional[Dict[str, Any]] = None
     plotly_chart: Optional[Dict[str, Any]] = None
+    charts: Optional[List[Dict[str, Any]]] = None
     timestamp: datetime
     
     class Config:
@@ -67,6 +69,7 @@ class MessageInDB(BaseModel):
     attachments: Optional[List[Dict[str, Any]]] = None
     visualization: Optional[Dict[str, Any]] = None
     plotly_chart: Optional[Dict[str, Any]] = None
+    charts: Optional[List[Dict[str, Any]]] = None
     timestamp: datetime
     created_at: datetime
     updated_at: datetime

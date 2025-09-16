@@ -250,6 +250,7 @@ Please analyze the provided data and respond to the user's request. The data has
     let messageContent = result.response;
     let visualizationData: Message['visualization'] = undefined;
     let plotlyChartData: Message['plotlyChart'] = undefined;
+    let chartsData: Message['charts'] = undefined;
 
     // Try to parse the response as JSON first
     try {
@@ -279,7 +280,7 @@ Please analyze the provided data and respond to the user's request. The data has
             : JSON.stringify(responseObj.content);
         }
         
-        // Check for chart data in response.chart
+        // Check for chart data in response.chart (single chart - legacy support)
         if (responseObj.visualization_needed && responseObj.chart) {
           const chartData = responseObj.chart;
           
@@ -294,6 +295,18 @@ Please analyze the provided data and respond to the user's request. The data has
               title: chartData.title
             };
           }
+        }
+        
+        // Check for multiple charts in response.charts (new format)
+        if (responseObj.visualization_needed && responseObj.charts && Array.isArray(responseObj.charts)) {
+          chartsData = responseObj.charts.map((chart: any) => ({
+            data: chart.data.map((item: any) => ({
+              label: item.label || item.name || String(item.x || item.category || 'Unknown'),
+              value: item.value || item.y || 0
+            })),
+            type: chart.type || 'bar',
+            title: chart.title
+          }));
         }
       } else {
         // Handle flat response structure
@@ -340,6 +353,18 @@ Please analyze the provided data and respond to the user's request. The data has
             chartData: parsedResponse.chart
           };
         }
+        
+        // Check for multiple charts (new format)
+        if (parsedResponse.visualization_needed && parsedResponse.charts && Array.isArray(parsedResponse.charts)) {
+          chartsData = parsedResponse.charts.map((chart: any) => ({
+            data: chart.data.map((item: any) => ({
+              label: item.label || item.name || String(item.x || item.category || 'Unknown'),
+              value: item.value || item.y || 0
+            })),
+            type: chart.type || 'bar',
+            title: chart.title
+          }));
+        }
       }
     } catch (error) {
       // If parsing fails, try to extract Plotly chart from text
@@ -361,6 +386,7 @@ Please analyze the provided data and respond to the user's request. The data has
       timestamp: new Date(),
       visualization: visualizationData,
       plotlyChart: plotlyChartData,
+      charts: chartsData,
     };
     setMessages((prev) => [...prev, aiMessage]);
     
@@ -381,7 +407,8 @@ Please analyze the provided data and respond to the user's request. The data has
           attachments: [],
           visualization: visualizationData,
           // Convert plotlyChart (frontend) to plotly_chart (backend)
-          plotly_chart: plotlyChartData
+          plotly_chart: plotlyChartData,
+          charts: chartsData
         } as any);
       } catch (error) {
         console.error('Failed to save messages to chat:', error);
@@ -412,7 +439,8 @@ Please analyze the provided data and respond to the user's request. The data has
         timestamp: new Date(msg.timestamp),
         role: msg.role as 'user' | 'assistant',
         // Convert plotly_chart (backend) to plotlyChart (frontend)
-        plotlyChart: (msg as any).plotly_chart || msg.plotlyChart
+        plotlyChart: (msg as any).plotly_chart || msg.plotlyChart,
+        charts: (msg as any).charts
       }));
       
       console.log('Formatted messages:', formattedMessages);

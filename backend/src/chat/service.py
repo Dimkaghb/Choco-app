@@ -205,6 +205,7 @@ class ChatService:
                 attachments=message_data.attachments,
                 visualization=message_data.visualization,
                 plotly_chart=message_data.plotly_chart,
+                charts=message_data.charts,
                 timestamp=now,
                 created_at=now,
                 updated_at=now

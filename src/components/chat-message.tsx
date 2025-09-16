@@ -96,6 +96,20 @@ export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
                   />
                 </div>
               )}
+              {message.charts && message.charts.length > 0 && (
+                <div className="mt-4 w-full overflow-hidden space-y-4">
+                  {message.charts.map((chart, index) => (
+                    <div key={index} className="w-full">
+                      <PlotlyChart 
+                        data={chart.data}
+                        type={chart.type}
+                        title={chart.title}
+                        className="rounded-md border bg-background p-2 sm:p-4 max-w-full overflow-auto"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </div>
