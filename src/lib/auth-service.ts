@@ -110,15 +110,18 @@ class AuthService {
   }
 
   setAuthData(authData: AuthResponse): void {
+    if (typeof window === 'undefined') return;
     localStorage.setItem('access_token', authData.access_token);
     localStorage.setItem('user', JSON.stringify(authData.user));
   }
 
   getToken(): string | null {
+    if (typeof window === 'undefined') return null;
     return localStorage.getItem('access_token');
   }
 
   getUser(): User | null {
+    if (typeof window === 'undefined') return null;
     const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   }
@@ -128,6 +131,7 @@ class AuthService {
   }
 
   logout(): void {
+    if (typeof window === 'undefined') return;
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
   }

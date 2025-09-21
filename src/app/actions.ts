@@ -47,7 +47,7 @@ export async function sendMessageAction(formData: FormData) {
     // Create the agent input with the new API structure
     const agentInput = await createMultiFileAgentInput(
       prompt,
-      files || [],
+      allFiles || [],
       {
         session_id: sessionId,
         metadata: {

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Search, MessageSquare, Trash2, Edit2, MoreHorizontal, LogOut, User } from "lucide-react";
+import { Plus, Search, MessageSquare, Trash2, Edit2, MoreHorizontal, LogOut, User, Files, Database } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Chat, ChatCreate } from "@/lib/types";
 import { chatService } from "@/lib/chat-service";
@@ -14,9 +14,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { backendService } from "@/lib/backend-service";
 
 interface ChatSidebarProps {
   currentChatId?: string;
@@ -31,6 +38,10 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
   const [isLoading, setIsLoading] = useState(true);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
+  const [userFiles, setUserFiles] = useState<any[]>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [filesStats, setFilesStats] = useState({ totalFiles: 0, totalSize: 0 });
 
   const loadChats = useCallback(async () => {
     try {
@@ -100,6 +111,66 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
     } catch (error) {
       console.error('Failed to delete chat:', error);
       toast.error('Не удалось удалить чат');
+    }
+  };
+
+  const loadAllUserFiles = async () => {
+    setIsLoadingFiles(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      
+      if (!token) {
+        toast.error('Токен авторизации не найден');
+        return;
+      }
+
+      // Load all files without chat filter
+      const response = await backendService.listUserFiles(token, undefined, 1, 100);
+      
+      setUserFiles(response.files || []);
+      
+      // Calculate statistics
+      const totalFiles = response.files?.length || 0;
+      const totalSize = response.files?.reduce((sum: number, file: any) => sum + (file.file_size || 0), 0) || 0;
+      setFilesStats({ totalFiles, totalSize });
+      
+    } catch (error) {
+      console.error('Error loading user files:', error);
+      toast.error('Ошибка при загрузке файлов');
+    } finally {
+      setIsLoadingFiles(false);
+    }
+  };
+
+  const handleShowAllFiles = () => {
+    setIsFilesModalOpen(true);
+    loadAllUserFiles();
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        toast.error('Токен авторизации не найден');
+        return;
+      }
+
+      await backendService.deleteFile(fileId, token);
+      toast.success('Файл удален');
+      
+      // Reload files
+      loadAllUserFiles();
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      toast.error('Ошибка при удалении файла');
     }
   };
 
@@ -268,6 +339,15 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleShowAllFiles}>
+                <Files className="w-3 h-3 mr-2" />
+                Мои файлы
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info(`Всего файлов: ${filesStats.totalFiles}\nОбщий размер: ${formatFileSize(filesStats.totalSize)}`)}>
+                <Database className="w-3 h-3 mr-2" />
+                Статистика данных
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-destructive">
                 <LogOut className="w-3 h-3 mr-2" />
                 Выйти
@@ -276,6 +356,95 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
           </DropdownMenu>
         </div>
       </div>
+      
+      {/* Files Modal */}
+      <Dialog open={isFilesModalOpen} onOpenChange={setIsFilesModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Files className="w-5 h-5" />
+              Мои файлы
+              <span className="text-sm text-muted-foreground ml-2">
+                ({filesStats.totalFiles} файлов, {formatFileSize(filesStats.totalSize)})
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col h-full">
+
+            {isLoadingFiles ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="ml-2">Загрузка файлов...</span>
+              </div>
+            ) : userFiles.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Files className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>У вас пока нет загруженных файлов</p>
+                <Button 
+                  onClick={loadAllUserFiles} 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-4"
+                >
+                  🔄 Обновить список
+                </Button>
+              </div>
+            ) : (
+              <ScrollArea className="flex-1">
+                <div className="space-y-2">
+                  {userFiles.map((file, index) => (
+                    <div key={`${file._id || 'file'}-${index}`} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Files className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate" title={file.filename}>
+                            {file.filename}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>{formatFileSize(file.file_size || 0)}</span>
+                            <span>{new Date(file.created_at).toLocaleDateString('ru-RU')}</span>
+                            {file.chat_id && (
+                              <span className="px-2 py-1 bg-primary/10 rounded text-primary">
+                                Чат: {file.chat_id.slice(-8)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        {file.download_url && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(file.download_url, '_blank')}
+                            className="h-8 w-8 p-0"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteFile(file._id)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

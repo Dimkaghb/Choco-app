@@ -14,6 +14,8 @@ import { ContextSidebar } from './context-sidebar';
 import { chatService } from '@/lib/chat-service';
 import { useDocuments } from '@/contexts/document-context';
 import { useChatStore } from '@/hooks/use-chat-store';
+import { useAuth } from '@/hooks/use-auth';
+import { authService } from '@/lib/auth-service';
 
 export function ChatUI() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -24,6 +26,15 @@ export function ChatUI() {
   const { toast } = useToast();
   const { uploadDocument, currentChatDocuments, setCurrentChatId: setDocumentChatId } = useDocuments();
   const { currentChat, setCurrentChat } = useChatStore();
+  const { isAuthenticated } = useAuth();
+
+  // Initialize document context with current chat on app load
+  useEffect(() => {
+    if (currentChat?.id && !currentChatId) {
+      setCurrentChatId(currentChat.id);
+      setDocumentChatId(currentChat.id);
+    }
+  }, [currentChat, currentChatId, setDocumentChatId]);
 
   // Sync current chat with document context and chat store
   useEffect(() => {
@@ -101,11 +112,31 @@ export function ChatUI() {
     }
     
     const chatId = chat.id;
+    
+    // Check if this is the 5th message and add file content if needed
+    const shouldIncludeFileContent = chat.message_count > 0 && (chat.message_count + 1) % 5 === 0;
+    let enhancedPrompt = prompt;
+    
+    console.log(`Current message count: ${chat.message_count}, next message will be #${chat.message_count + 1}`);
+    console.log(`Should include file content: ${shouldIncludeFileContent} (every 5th message)`);
+    console.log(`Available documents: ${currentChatDocuments.length}`);
+    
+    if (shouldIncludeFileContent && currentChatDocuments.length > 0) {
+      console.log(`Adding file content for message #${chat.message_count + 1} (every 5th message)`);
+      
+      // Get file contents from document context
+      const fileContents = currentChatDocuments.map(doc => {
+        return `\n\n--- File: ${doc.name} ---\n${doc.content || 'Content not available'}`;
+      }).join('\n');
+      
+      enhancedPrompt = `${prompt}\n\n[System: Including file contents for context (message #${chat.message_count + 1})]${fileContents}`;
+    }
 
     // Upload files to document context
     for (const file of filesToProcess) {
       try {
-        await uploadDocument(file, chatId, 'chat');
+        const authToken = isAuthenticated ? authService.getToken() : undefined;
+        await uploadDocument(file, chatId, 'chat', authToken || undefined);
       } catch (error) {
         console.error('Failed to upload document to context:', error);
       }
@@ -139,7 +170,7 @@ export function ChatUI() {
     // Check if we have any files at all
     if (filesToProcess.length === 0) {
       // No files - send directly to AI API for fastest response
-      result = await sendDirectMessageAction(prompt, sessionId);
+      result = await sendDirectMessageAction(enhancedPrompt, sessionId);
     } else {
       // Check if we have data files that need backend processing
       const dataFiles = filesToProcess.filter(file => 
@@ -173,7 +204,7 @@ export function ChatUI() {
             // For Excel files, we still need backend processing
             const backendResult = await backendService.processFile({
               file: file,
-              prompt: prompt
+              prompt: enhancedPrompt
             });
             
             if (backendResult.success && backendResult.processed_data) {
@@ -181,21 +212,10 @@ export function ChatUI() {
               const fileInfo = backendResult.file_info || {} as any;
               const processedData = backendResult.processed_data;
               
-              const enhancedPrompt = `File Information:
-- Filename: ${fileInfo.filename || file.name}
-- Size: ${fileInfo.size || 0} bytes (${fileInfo.size_mb || 0} MB)
-- Type: ${processedData.type || 'unknown'}
-
-Data Analysis:
-${JSON.stringify(processedData, null, 2)}
-
-User Request:
-${prompt}
-
-Please analyze the provided data and respond to the user's request. The data has been processed and structured for your analysis.`;
+              const fileEnhancedPrompt = 'File Information:\n- Filename: ' + (fileInfo.filename || file.name) + '\n- Size: ' + (fileInfo.size || 0) + ' bytes (' + (fileInfo.size_mb || 0) + ' MB)\n- Type: ' + (processedData.type || 'unknown') + '\n\nData Analysis:\n' + JSON.stringify(processedData, null, 2) + '\n\nUser Request:\n' + enhancedPrompt + '\n\nPlease analyze the provided data and respond to the user request. The data has been processed and structured for your analysis.';
               
               // Send enhanced prompt to AI API
-            result = await sendDirectMessageAction(enhancedPrompt, sessionId);
+            result = await sendDirectMessageAction(fileEnhancedPrompt, sessionId);
             } else {
               throw new Error(backendResult.error || 'Backend processing failed');
             }
@@ -206,9 +226,11 @@ Please analyze the provided data and respond to the user's request. The data has
           
           // If we have file content, create enhanced prompt and send directly to AI API
           if (fileContent && !result) {
-            const enhancedPrompt = `File: ${file.name} (${file.type})\n\nFile Content:\n${fileContent}\n\nUser Request:\n${prompt}\n\nPlease analyze the provided file data and respond to the user's request.`;
+            const fileName = file?.name || 'unknown';
+            const fileType = file?.type || 'unknown';
+            const fileEnhancedPrompt = 'File: ' + fileName + ' (' + fileType + ')\n\nFile Content:\n' + fileContent + '\n\nUser Request:\n' + enhancedPrompt + '\n\nPlease analyze the provided file data and respond to the user request.';
             
-            result = await sendDirectMessageAction(enhancedPrompt, sessionId);
+            result = await sendDirectMessageAction(fileEnhancedPrompt, sessionId);
           }
           
         } catch (error) {
@@ -396,7 +418,7 @@ Please analyze the provided data and respond to the user's request. The data has
     // Save messages to current chat if one exists
     if (currentChatId) {
       try {
-        // Save user message
+        // Save user message (always use original prompt for display)
         await chatService.addMessage(currentChatId, {
           role: 'user',
           content: prompt,
@@ -413,6 +435,10 @@ Please analyze the provided data and respond to the user's request. The data has
           plotly_chart: plotlyChartData,
           charts: chartsData
         } as any);
+        
+        // Update current chat to get the latest message_count
+        const updatedChat = await chatService.getChat(currentChatId);
+        setCurrentChat(updatedChat);
       } catch (error) {
         console.error('Failed to save messages to chat:', error);
         // Don't show error to user as the chat still works locally
@@ -435,6 +461,8 @@ Please analyze the provided data and respond to the user's request. The data has
       
       setCurrentChatId(chatId);
       setCurrentChat(chatWithMessages);
+      // Immediately set the chat ID in document context to load files
+      setDocumentChatId(chatId);
       
       // Convert backend messages to frontend format
       const formattedMessages: Message[] = chatWithMessages.messages.map(msg => ({
@@ -458,13 +486,15 @@ Please analyze the provided data and respond to the user's request. The data has
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, setDocumentChatId]);
 
   const handleNewChat = useCallback(() => {
     setCurrentChatId(undefined);
     setCurrentChat(null);
     setMessages([]);
-  }, []);
+    // Clear document context when starting new chat
+    setDocumentChatId('');
+  }, [setDocumentChatId]);
 
   // Auto-create chat when user sends first message in a new chat
   const ensureCurrentChat = useCallback(async (firstMessage: string): Promise<Chat> => {
@@ -505,11 +535,11 @@ Please analyze the provided data and respond to the user's request. The data has
         </aside>
         
         {/* Main Chat Area - Full width on mobile, adjusted on desktop */}
-        <main className={`flex flex-1 flex-col h-full min-w-0 transition-all duration-300 z-20 ${
+        <main className={"flex flex-1 flex-col h-full min-w-0 transition-all duration-300 z-20 " + (
           isContextSidebarCollapsed 
             ? 'mr-0 sm:mr-2 md:mr-12 lg:mr-12' 
             : 'mr-0 sm:mr-2 md:mr-64 lg:mr-64'
-        }`}>
+        )}>
           <ChatHeader currentChat={currentChat} />
           <div className="flex-1 overflow-hidden px-2 sm:px-4">
             <ChatMessages messages={messages} isLoading={isLoading} />

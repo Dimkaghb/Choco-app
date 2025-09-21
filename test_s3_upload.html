@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test S3 Upload</title>
+</head>
+<body>
+    <h1>Test S3 Upload</h1>
+    <input type="file" id="fileInput">
+    <button onclick="testUpload()">Test Upload</button>
+    <div id="result"></div>
+
+    <script>
+        async function testUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('result');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = 'Please select a file';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            
+            try {
+                // Get presigned URL from backend
+                const urlResponse = await fetch('http://localhost:8000/files/test/upload-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!urlResponse.ok) {
+                    throw new Error(`Failed to get upload URL: ${urlResponse.status}`);
+                }
+                
+                const urlData = await urlResponse.json();
+                console.log('Got presigned URL:', urlData.presigned_url.substring(0, 100) + '...');
+                
+                // Upload file to S3
+                const uploadResponse = await fetch(urlData.presigned_url, {
+                    method: 'PUT',
+                    body: file,
+                    headers: {
+                        'Content-Type': file.type || 'text/plain'
+                    }
+                });
+                
+                console.log('Upload response status:', uploadResponse.status);
+                console.log('Upload response headers:', [...uploadResponse.headers.entries()]);
+                
+                if (uploadResponse.ok) {
+                    resultDiv.innerHTML = `<div style="color: green;">Upload successful! Status: ${uploadResponse.status}</div>`;
+                } else {
+                    const errorText = await uploadResponse.text().catch(() => 'No error details');
+                    resultDiv.innerHTML = `<div style="color: red;">Upload failed! Status: ${uploadResponse.status}, Error: ${errorText}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                resultDiv.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

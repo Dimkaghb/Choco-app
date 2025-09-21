@@ -8,6 +8,8 @@ import { FileAttachment } from '@/lib/types';
 import { DocumentList } from '@/components/document-list';
 import { useDocuments } from '@/contexts/document-context';
 import { useChatStore } from '@/hooks/use-chat-store';
+import { useAuth } from '@/hooks/use-auth';
+import { authService } from '@/lib/auth-service';
 import { ReportCreationModal } from '@/components/report-creation-modal';
 
 interface ContextSidebarProps {
@@ -20,18 +22,19 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const { currentChatDocuments, uploadDocument, removeDocument, setCurrentChatId, isProcessing } = useDocuments();
+  const { uploadDocument, currentChatDocuments, removeDocument, isProcessing } = useDocuments();
   const { currentChat } = useChatStore();
+  const { isAuthenticated } = useAuth();
+  
+  // Debug log for documents
+  useEffect(() => {
+    console.log('Context sidebar - currentChatDocuments:', currentChatDocuments);
+    console.log('Context sidebar - currentChat:', currentChat);
+  }, [currentChatDocuments, currentChat]);
 
   useEffect(() => {
     onCollapseChange?.(isCollapsed);
   }, [isCollapsed, onCollapseChange]);
-
-  useEffect(() => {
-    if (currentChat?.id) {
-      setCurrentChatId(currentChat.id);
-    }
-  }, [currentChat?.id, setCurrentChatId]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -39,7 +42,8 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
 
     for (const file of Array.from(files)) {
       try {
-        await uploadDocument(file, currentChat.id, 'sidebar');
+        const authToken = isAuthenticated ? authService.getToken() : undefined;
+        await uploadDocument(file, currentChat.id, 'sidebar', authToken || undefined);
       } catch (error) {
         console.error('Failed to upload document:', error);
       }

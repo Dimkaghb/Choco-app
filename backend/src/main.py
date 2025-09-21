@@ -12,6 +12,10 @@ from .ai.api import router as ai_router
 from .auth.database import connect_to_mongo, close_mongo_connection
 from .chat.database import create_indexes
 from .report.async_service import async_report_service
+from .S3_filestorage.api import router as file_storage_router
+from .S3_filestorage.service import file_storage_service
+from fastapi import Query
+
 
 
 @asynccontextmanager
@@ -33,6 +37,10 @@ async def lifespan(app: FastAPI):
         # Start report cleanup task
         asyncio.create_task(async_report_service.start_cleanup_task())
         print("Report cleanup task started")
+        
+        # Create file storage indexes
+        await file_storage_service.create_indexes()
+        print("File storage indexes created")
     except Exception as e:
         print(f"Failed to connect to MongoDB: {e}")
         raise e
@@ -65,6 +73,7 @@ app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(report_router)
 app.include_router(ai_router)
+app.include_router(file_storage_router)
 
 
 @app.get("/")
@@ -75,6 +84,10 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "version": settings.API_VERSION}
+
+
+# Legacy S3 endpoints have been moved to /files/ router
+# These endpoints are now handled by the file_storage_router with authentication
 
 
 if __name__ == "__main__":

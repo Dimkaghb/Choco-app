@@ -26,7 +26,8 @@ class Settings(BaseSettings):
         "http://frontend:9002",  # Docker container name
         "http://choco-frontend:9002",  # Docker container name from compose
         "http://freedom-analysis.chocodev.kz:9002",  # Production frontend
-        "https://freedom-analysis.chocodev.kz:9002"  # Production frontend HTTPS
+        "https://freedom-analysis.chocodev.kz:9002"
+        "*"  # Production frontend HTTPS
     ]
     
     # File Processing Configuration
@@ -62,6 +63,13 @@ class Settings(BaseSettings):
     MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
     DATABASE_NAME: str = os.getenv("DATABASE_NAME", "Choco")
     USERS_COLLECTION: str = os.getenv("USERS_COLLECTION", "Choco_users")
+
+    #S3 config
+    S3_ENDPOINT: str = os.getenv("S3_ENDPOINT")
+    S3_BUCKET: str = os.getenv("S3_BUCKET")
+    S3_ACCESS_KEY: str = os.getenv("S3_ACCESS_KEY")
+    S3_SECRET_KEY: str = os.getenv("S3_SECRET_KEY")
+    S3_REGION: str = os.getenv("S3_REGION")
     
     model_config = {
         "env_file": ".env",
