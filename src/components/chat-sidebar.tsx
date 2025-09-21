@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Search, MessageSquare, Trash2, Edit2, MoreHorizontal, LogOut, User, Files, Database } from "lucide-react";
+import { Plus, Search, MessageSquare, Trash2, Edit2, MoreHorizontal, LogOut, User, Files, Database, FileText } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Chat, ChatCreate } from "@/lib/types";
 import { chatService } from "@/lib/chat-service";
@@ -32,7 +32,7 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSidebarProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const [chats, setChats] = useState<Chat[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +42,9 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
   const [userFiles, setUserFiles] = useState<any[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [filesStats, setFilesStats] = useState({ totalFiles: 0, totalSize: 0 });
+  const [isKnowledgeBaseModalOpen, setIsKnowledgeBaseModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [knowledgeBaseFiles, setKnowledgeBaseFiles] = useState<any[]>([]);
 
   const loadChats = useCallback(async () => {
     try {
@@ -174,6 +177,78 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
     }
   };
 
+  const handleKnowledgeBaseFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !token) return;
+
+    setIsUploading(true);
+    
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // Upload file using S3 flow
+        const uploadedFile = await backendService.uploadFile(
+          file, 
+          token, 
+          undefined, // no chat_id for knowledge base
+          'Knowledge base document', // description
+          ['knowledge-base'] // tags
+        );
+        return uploadedFile;
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+      
+      // Add uploaded files to knowledge base list
+      setKnowledgeBaseFiles(prev => [...prev, ...uploadedFiles]);
+      
+      toast.success(`Загружено ${uploadedFiles.length} файл(ов) в базу знаний`);
+      
+      // Clear the input
+      event.target.value = '';
+      
+    } catch (error) {
+      console.error('Error uploading files to knowledge base:', error);
+      toast.error('Ошибка при загрузке файлов в базу знаний');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteKnowledgeBaseFile = async (fileId: string) => {
+    if (!token) return;
+    
+    try {
+      await backendService.deleteFile(fileId, token);
+      setKnowledgeBaseFiles(prev => prev.filter(file => file.id !== fileId));
+      toast.success('Документ удален из базы знаний');
+    } catch (error) {
+      console.error('Error deleting knowledge base file:', error);
+      toast.error('Ошибка при удалении документа');
+    }
+  };
+
+  const loadKnowledgeBaseFiles = useCallback(async () => {
+    if (!token) return;
+    
+    try {
+      // Load files tagged as knowledge-base
+      const response = await backendService.listUserFiles(token, undefined, 1, 100);
+      const kbFiles = response.files.filter((file: any) => 
+        file.tags && file.tags.includes('knowledge-base')
+      );
+      setKnowledgeBaseFiles(kbFiles);
+    } catch (error) {
+      console.error('Error loading knowledge base files:', error);
+    }
+  }, [token]);
+
+  // Load knowledge base files when modal opens
+  useEffect(() => {
+    if (isKnowledgeBaseModalOpen) {
+      loadKnowledgeBaseFiles();
+    }
+  }, [isKnowledgeBaseModalOpen, loadKnowledgeBaseFiles]);
+
   const handleEditChat = async (chatId: string, newTitle: string) => {
     try {
       const updatedChat = await chatService.updateChat(chatId, { title: newTitle });
@@ -231,7 +306,19 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
         />
       </div>
       
-      <ScrollArea className="flex-1 mt-3">
+      {/* Knowledge Base Section */}
+      <div className="mt-3 mb-3">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start gap-2 h-9 text-sm"
+          onClick={() => setIsKnowledgeBaseModalOpen(true)}
+        >
+          <Database className="w-4 h-4" />
+          База знаний
+        </Button>
+      </div>
+      
+      <ScrollArea className="flex-1">
         {isLoading ? (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
@@ -343,10 +430,7 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
                 <Files className="w-3 h-3 mr-2" />
                 Мои файлы
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info(`Всего файлов: ${filesStats.totalFiles}\nОбщий размер: ${formatFileSize(filesStats.totalSize)}`)}>
-                <Database className="w-3 h-3 mr-2" />
-                Статистика данных
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info(`Всего файлов: ${filesStats.totalFiles}\nОбщий размер: ${formatFileSize(filesStats.totalSize)}`)}>                <Database className="w-3 h-3 mr-2" />                Статистика данных              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-destructive">
                 <LogOut className="w-3 h-3 mr-2" />
@@ -443,6 +527,91 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat }: ChatSide
               </ScrollArea>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Knowledge Base Modal */}
+      <Dialog open={isKnowledgeBaseModalOpen} onOpenChange={setIsKnowledgeBaseModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              База знаний
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+             {/* File Upload Section */}
+             <div className="space-y-3">
+               <div className="text-sm text-muted-foreground">
+                 Загрузите документы для улучшения ответов ИИ
+               </div>
+               <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                 <input
+                   type="file"
+                   multiple
+                   accept=".pdf,.doc,.docx,.txt,.md,.csv,.json,.xml,.html,.rtf,.odt"
+                   className="hidden"
+                   id="knowledge-base-upload"
+                   onChange={handleKnowledgeBaseFileUpload}
+                   disabled={isUploading}
+                 />
+                 <label
+                   htmlFor="knowledge-base-upload"
+                   className="cursor-pointer flex flex-col items-center gap-2"
+                 >
+                   <div className="text-muted-foreground">
+                     {isUploading ? 'Загрузка файлов...' : 'Перетащите файлы сюда или нажмите для выбора'}
+                   </div>
+                   <Button variant="outline" type="button" disabled={isUploading}>
+                     {isUploading ? 'Загружается...' : 'Выбрать файлы'}
+                   </Button>
+                 </label>
+               </div>
+             </div>
+
+             {/* Uploaded Documents List */}
+             <div className="space-y-3">
+               <h3 className="font-medium">Загруженные документы</h3>
+               <div className="border rounded-lg">
+                 <ScrollArea className="h-48">
+                   <div className="p-4">
+                     {knowledgeBaseFiles.length === 0 ? (
+                       <div className="text-center py-8 text-muted-foreground">
+                         <Files className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                         <p>Документы не найдены</p>
+                         <p className="text-sm mt-1">Загрузите документы для создания базы знаний</p>
+                       </div>
+                     ) : (
+                       <div className="space-y-2">
+                         {knowledgeBaseFiles.map((file, index) => (
+                           <div key={`kb-${file.id || index}`} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
+                             <div className="flex items-center space-x-3">
+                               <Files className="w-5 h-5 text-primary" />
+                               <div>
+                                 <p className="font-medium">{file.filename}</p>
+                                 <p className="text-sm text-muted-foreground">
+                                   {formatFileSize(file.file_size || 0)} • {new Date(file.created_at).toLocaleDateString('ru-RU')}
+                                 </p>
+                               </div>
+                             </div>
+                             <Button
+                               variant="ghost"
+                               size="sm"
+                               onClick={() => handleDeleteKnowledgeBaseFile(file.id)}
+                               className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                               title="Удалить документ"
+                             >
+                               <Trash2 className="w-4 h-4" />
+                             </Button>
+                           </div>
+                         ))}
+                       </div>
+                     )}
+                   </div>
+                 </ScrollArea>
+               </div>
+             </div>
+           </div>
         </DialogContent>
       </Dialog>
     </div>

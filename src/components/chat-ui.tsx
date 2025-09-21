@@ -11,6 +11,7 @@ import { ChatHeader } from './chat-header';
 import { ChatMessages } from './chat-messages';
 import { ChatInput } from './chat-input';
 import { ContextSidebar } from './context-sidebar';
+import { DataFoldersView } from './data-folders-view';
 import { chatService } from '@/lib/chat-service';
 import { useDocuments } from '@/contexts/document-context';
 import { useChatStore } from '@/hooks/use-chat-store';
@@ -23,6 +24,7 @@ export function ChatUI() {
   const [currentChatId, setCurrentChatId] = useState<string | undefined>(undefined);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isContextSidebarCollapsed, setIsContextSidebarCollapsed] = useState(false);
+  const [showDataFolders, setShowDataFolders] = useState(true);
   const { toast } = useToast();
   const { uploadDocument, currentChatDocuments, setCurrentChatId: setDocumentChatId } = useDocuments();
   const { currentChat, setCurrentChat } = useChatStore();
@@ -461,6 +463,7 @@ export function ChatUI() {
       
       setCurrentChatId(chatId);
       setCurrentChat(chatWithMessages);
+      setShowDataFolders(false); // Hide data folders when chat is selected
       // Immediately set the chat ID in document context to load files
       setDocumentChatId(chatId);
       
@@ -492,9 +495,16 @@ export function ChatUI() {
     setCurrentChatId(undefined);
     setCurrentChat(null);
     setMessages([]);
+    setShowDataFolders(true); // Show data folders when starting new chat
     // Clear document context when starting new chat
     setDocumentChatId('');
   }, [setDocumentChatId]);
+
+  const handleFolderSelect = useCallback((folderId: string) => {
+    console.log('Selected folder:', folderId);
+    // TODO: Implement folder selection logic
+    // This could open a specific data view or filter documents by folder
+  }, []);
 
   // Auto-create chat when user sends first message in a new chat
   const ensureCurrentChat = useCallback(async (firstMessage: string): Promise<Chat> => {
@@ -540,13 +550,21 @@ export function ChatUI() {
             ? 'mr-0 sm:mr-2 md:mr-12 lg:mr-12' 
             : 'mr-0 sm:mr-2 md:mr-64 lg:mr-64'
         )}>
-          <ChatHeader currentChat={currentChat} />
-          <div className="flex-1 overflow-hidden px-2 sm:px-4">
-            <ChatMessages messages={messages} isLoading={isLoading} />
-          </div>
-          <div className="px-2 sm:px-4 pb-2 sm:pb-4">
-            <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
-          </div>
+          {showDataFolders ? (
+            // Show data folders view when no chat is selected
+            <DataFoldersView onFolderSelect={handleFolderSelect} />
+          ) : (
+            // Show chat interface when a chat is selected
+            <>
+              <ChatHeader currentChat={currentChat} />
+              <div className="flex-1 overflow-hidden px-2 sm:px-4">
+                <ChatMessages messages={messages} isLoading={isLoading} />
+              </div>
+              <div className="px-2 sm:px-4 pb-2 sm:pb-4">
+                <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
+              </div>
+            </>
+          )}
         </main>
         
         {/* Right Context Sidebar - Hidden on mobile and small tablets */}

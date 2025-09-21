@@ -60,6 +60,27 @@ export interface FileMetadata {
   updated_at: string;
 }
 
+export interface DataFolder {
+  id: string;
+  name: string;
+  fileIds: string[];
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateFolderRequest {
+  name: string;
+  fileIds: string[];
+  type?: 'documents' | 'reports' | 'analytics';
+}
+
+export interface UpdateFolderRequest {
+  name: string;
+  fileIds: string[];
+  type?: 'documents' | 'reports' | 'analytics';
+}
+
 class BackendService {
   private config: BackendConfig;
 
@@ -412,6 +433,112 @@ class BackendService {
         throw error;
       }
       throw new Error('Unknown error occurred while getting file content');
+    }
+  }
+
+  /**
+   * Create a new data folder
+   */
+  async createFolder(request: CreateFolderRequest, authToken: string): Promise<DataFolder> {
+    try {
+      const response = await fetch(`${this.config.baseUrl}/folders/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(request)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.detail || errorData.error || `HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Unknown error occurred while creating folder');
+    }
+  }
+
+  /**
+   * Update an existing data folder
+   */
+  async updateFolder(folderId: string, request: UpdateFolderRequest, authToken: string): Promise<DataFolder> {
+    try {
+      const response = await fetch(`${this.config.baseUrl}/folders/${folderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(request)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.detail || errorData.error || `HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Unknown error occurred while updating folder');
+    }
+  }
+
+  /**
+   * Get all user folders
+   */
+  async getFolders(authToken: string): Promise<DataFolder[]> {
+    try {
+      const response = await fetch(`${this.config.baseUrl}/folders/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.detail || errorData.error || `HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Unknown error occurred while getting folders');
+    }
+  }
+
+  /**
+   * Delete a folder
+   */
+  async deleteFolder(folderId: string, authToken: string): Promise<void> {
+    try {
+      const response = await fetch(`${this.config.baseUrl}/folders/${folderId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.detail || errorData.error || `HTTP ${response.status}`);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Unknown error occurred while deleting folder');
     }
   }
 

@@ -9,11 +9,13 @@ from .auth.api import router as auth_router
 from .chat.api import router as chat_router
 from .report.api import router as report_router
 from .ai.api import router as ai_router
+from .folders.routes import router as folders_router
 from .auth.database import connect_to_mongo, close_mongo_connection
 from .chat.database import create_indexes
 from .report.async_service import async_report_service
 from .S3_filestorage.api import router as file_storage_router
 from .S3_filestorage.service import file_storage_service
+from .folders.service import folder_service
 from fastapi import Query
 
 
@@ -41,6 +43,10 @@ async def lifespan(app: FastAPI):
         # Create file storage indexes
         await file_storage_service.create_indexes()
         print("File storage indexes created")
+        
+        # Create folder indexes
+        await folder_service.create_indexes()
+        print("Folder indexes created")
     except Exception as e:
         print(f"Failed to connect to MongoDB: {e}")
         raise e
@@ -74,6 +80,7 @@ app.include_router(chat_router)
 app.include_router(report_router)
 app.include_router(ai_router)
 app.include_router(file_storage_router)
+app.include_router(folders_router)
 
 
 @app.get("/")
