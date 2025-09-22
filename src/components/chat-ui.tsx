@@ -506,6 +506,14 @@ export function ChatUI() {
     // This could open a specific data view or filter documents by folder
   }, []);
 
+  const handleShowDataFolders = useCallback(() => {
+    setShowDataFolders(true);
+    setCurrentChatId(undefined);
+    setCurrentChat(null);
+    setMessages([]);
+    setDocumentChatId('');
+  }, [setDocumentChatId]);
+
   // Auto-create chat when user sends first message in a new chat
   const ensureCurrentChat = useCallback(async (firstMessage: string): Promise<Chat> => {
     if (currentChatId && currentChat) {
@@ -541,6 +549,7 @@ export function ChatUI() {
             currentChatId={currentChatId}
             onChatSelect={handleChatSelect}
             onNewChat={handleNewChat}
+            onShowDataFolders={handleShowDataFolders}
           />
         </aside>
         

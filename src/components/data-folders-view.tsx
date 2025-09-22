@@ -7,9 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Folder, FileText, BarChart3, Upload, Edit2, Save, X } from 'lucide-react';
+import { Plus, Folder, FileText, BarChart3, Upload, Edit2, Save, X, Database, Trash2, Files } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { backendService } from '@/lib/backend-service';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 
 interface DataFolder {
   id: string;
@@ -41,18 +43,24 @@ const folderIcons = {
 
 
 export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
+  const { token } = useAuth();
   const [folders, setFolders] = useState<DataFolder[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingFolder, setEditingFolder] = useState<DataFolder | null>(null);
   const [newFolderName, setNewFolderName] = useState('');
-  const [newFolderType, setNewFolderType] = useState<DataFolder['type']>('documents');
+  const [newFolderType, setNewFolderType] = useState<'documents' | 'reports' | 'analytics'>('documents');
+  const [editingFolder, setEditingFolder] = useState<DataFolder | null>(null);
   const [editFolderName, setEditFolderName] = useState('');
-  const [knowledgeBaseFiles, setKnowledgeBaseFiles] = useState<KnowledgeBaseFile[]>([]);
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+  const [showKnowledgeBase, setShowKnowledgeBase] = useState(true);
+  const [allKnowledgeBaseFiles, setAllKnowledgeBaseFiles] = useState<KnowledgeBaseFile[]>([]);
+  const [isLoadingAllFiles, setIsLoadingAllFiles] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [knowledgeBaseFiles, setKnowledgeBaseFiles] = useState<any[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [editSelectedFiles, setEditSelectedFiles] = useState<string[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
-  const { user, token } = useAuth();
+  const { user } = useAuth();
 
   const loadFolders = async () => {
     if (!token) return;
@@ -66,82 +74,118 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
     }
   };
 
-  const loadKnowledgeBaseFiles = async () => {
-    console.log('🔍 Starting loadKnowledgeBaseFiles...');
-    console.log('👤 User exists:', !!user);
-    console.log('🔑 Token exists:', !!token);
-    console.log('🔑 Token value:', token);
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleKnowledgeBaseFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !token) return;
+
+    setIsUploading(true);
     
-    if (!token) {
-      console.log('❌ No token found, returning early');
-      return;
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // Upload file using S3 flow
+        const uploadedFile = await backendService.uploadFile(
+          file, 
+          token, 
+          undefined, // no chat_id for knowledge base
+          'Knowledge base document', // description
+          ['knowledge-base'] // tags
+        );
+        return uploadedFile;
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+      
+      // Add uploaded files to knowledge base list
+      setKnowledgeBaseFiles(prev => [...prev, ...uploadedFiles]);
+      
+      toast.success(`Загружено ${uploadedFiles.length} файл(ов) в базу знаний`);
+      
+      // Clear the input
+      event.target.value = '';
+      
+    } catch (error) {
+      console.error('Error uploading files to knowledge base:', error);
+      toast.error('Ошибка при загрузке файлов в базу знаний');
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const handleDeleteKnowledgeBaseFile = async (fileId: string) => {
+    if (!token) return;
+    
+    try {
+      await backendService.deleteFile(fileId, token);
+      setKnowledgeBaseFiles(prev => prev.filter(file => file.id !== fileId));
+      toast.success('Документ удален из базы знаний');
+    } catch (error) {
+      console.error('Error deleting knowledge base file:', error);
+      toast.error('Ошибка при удалении документа');
+    }
+  };
+
+  const loadKnowledgeBaseFiles = async () => {
+    if (!token) return;
+    
+    setIsLoadingAllFiles(true);
+    try {
+      // Load files tagged as knowledge-base
+      const response = await backendService.listUserFiles(token, undefined, 1, 100);
+      const kbFiles = response.files.filter((file: any) => 
+        file.tags && file.tags.includes('knowledge-base')
+      );
+      setKnowledgeBaseFiles(kbFiles);
+      setAllKnowledgeBaseFiles(kbFiles);
+    } catch (error) {
+      console.error('Error loading knowledge base files:', error);
+    } finally {
+      setIsLoadingAllFiles(false);
+    }
+  };
+
+  const loadAllKnowledgeBaseFiles = async () => {
+    await loadKnowledgeBaseFiles();
+  };
+
+  const loadKnowledgeBaseFilesForFolders = async () => {
+    if (!token) return;
     
     setIsLoadingFiles(true);
     try {
-      console.log('📡 Making API call to listUserFiles...');
-      // Load files with pagination parameters like in chat-sidebar
       const response = await backendService.listUserFiles(token, undefined, 1, 100);
-      console.log('📥 API Response received:', response);
       
       if (response.files && Array.isArray(response.files)) {
-        console.log('📁 Total files received:', response.files.length);
-        console.log('📋 Sample file structure:', response.files[0]);
-        console.log('📋 All files:', response.files.map(f => ({ filename: f.filename, tags: f.tags })));
-        
-        // Filter files tagged as knowledge-base
-        const kbFiles = response.files.filter((file: any) => {
-          const hasKnowledgeBaseTag = file.tags && file.tags.includes('knowledge-base');
-          console.log(`📄 File ${file.filename}: tags=${JSON.stringify(file.tags)}, hasKnowledgeBaseTag=${hasKnowledgeBaseTag}`);
-          return hasKnowledgeBaseTag;
-        });
-        
-        console.log('🏷️ Knowledge base files found:', kbFiles.length);
-        
-        // Временно показать все файлы для отладки
-        if (kbFiles.length === 0) {
-          console.log('⚠️ No knowledge-base files found, showing all files for debugging');
-          const allFiles: KnowledgeBaseFile[] = response.files.map((file: any) => {
-            const mappedFile = {
-              id: file._id || file.id,
-              filename: file.filename,
-              size: file.file_size || file.size || 0,
-              created_at: file.created_at || file.upload_date,
-              content_type: file.content_type
-            };
-            console.log('🔄 Mapped file (all files):', mappedFile);
-            return mappedFile;
-          });
-          setKnowledgeBaseFiles(allFiles);
-          return;
-        }
-        
-        const files: KnowledgeBaseFile[] = kbFiles.map((file: any) => {
-          const mappedFile = {
+        // Показать только файлы с description "Knowledge base document"
+        const knowledgeBaseFiles: KnowledgeBaseFile[] = response.files
+          .filter((file: any) => file.description === "Knowledge base document")
+          .map((file: any) => ({
             id: file._id || file.id,
             filename: file.filename,
             size: file.file_size || file.size || 0,
             created_at: file.created_at || file.upload_date,
             content_type: file.content_type
-          };
-          console.log('🔄 Mapped file:', mappedFile);
-          return mappedFile;
-        });
-        
-        console.log('✅ Setting knowledge base files:', files);
-        setKnowledgeBaseFiles(files);
+          }));
+        setKnowledgeBaseFiles(knowledgeBaseFiles);
       } else {
-        console.log('❌ No files array in response or response.files is not an array');
         setKnowledgeBaseFiles([]);
       }
     } catch (error) {
-      console.error('❌ Failed to load knowledge base files:', error);
+      console.error('Failed to load knowledge base files:', error);
       setKnowledgeBaseFiles([]);
     } finally {
       setIsLoadingFiles(false);
-      console.log('🏁 loadKnowledgeBaseFiles completed');
     }
   };
+
+
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
@@ -219,14 +263,19 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
   useEffect(() => {
     if (token) {
       loadFolders();
+      loadAllKnowledgeBaseFiles();
     }
   }, [token]);
 
   useEffect(() => {
     if (isCreateDialogOpen || isEditDialogOpen) {
-      loadKnowledgeBaseFiles();
+      loadKnowledgeBaseFilesForFolders();
     }
   }, [isCreateDialogOpen, isEditDialogOpen, user?.token]);
+
+  useEffect(() => {
+    loadKnowledgeBaseFiles();
+  }, [token]);
   
 
 
@@ -334,7 +383,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-h-screen overflow-y-auto">
       <div className="mb-8 text-center">
         <h2 className="text-3xl font-bold text-white mb-3">
           Ваши <span className="text-gradient">папки с данными</span>
@@ -356,9 +405,9 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
             </DialogHeader>
             <div className="space-y-6 pt-4">
               <div>
-                <Label htmlFor="folder-name-2" className="text-gray-300 font-medium">Название папки</Label>
+                <Label htmlFor="folder-name-main" className="text-gray-300 font-medium">Название папки</Label>
                 <Input
-                  id="folder-name-2"
+                  id="folder-name-main"
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Введите название папки"
@@ -524,36 +573,133 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
         </DialogContent>
       </Dialog>
 
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            onClick={() => setShowKnowledgeBase(!showKnowledgeBase)}
+            className="button-gradient flex items-center space-x-2"
+          >
+            <Database className="h-5 w-5" />
+            <span>Загрузить документы</span>
+          </Button>
+        </div>
+        
+        {showKnowledgeBase && (
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
+            <div className="space-y-6">
+              {/* File Upload Section */}
+              <div className="space-y-3">
+                <div className="text-sm text-gray-300">
+                  Загрузите документы для улучшения ответов ИИ
+                </div>
+                <div className="border-2 border-dashed border-gray-600/50 rounded-lg p-6 text-center">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.json,.xml,.html,.rtf,.odt"
+                    className="hidden"
+                    id="knowledge-base-upload"
+                    onChange={handleKnowledgeBaseFileUpload}
+                    disabled={isUploading}
+                  />
+                  <label
+                    htmlFor="knowledge-base-upload"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    <div className="text-gray-400">
+                      {isUploading ? 'Загрузка файлов...' : 'Перетащите файлы сюда или нажмите для выбора'}
+                    </div>
+                  </label>
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    disabled={isUploading}
+                    onClick={() => document.getElementById('knowledge-base-upload')?.click()}
+                  >
+                    {isUploading ? 'Загружается...' : 'Выбрать файлы'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Uploaded Documents List */}
+              <div className="space-y-3">
+                <h3 className="font-medium text-white">Загруженные документы</h3>
+                <div className="border border-gray-600/50 rounded-lg">
+                  <ScrollArea className="h-48">
+                    <div className="p-4">
+                      {knowledgeBaseFiles.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400">
+                          <Files className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                          <p>Документы не найдены</p>
+                          <p className="text-sm mt-1">Загрузите документы для создания базы знаний</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {knowledgeBaseFiles.map((file, index) => (
+                            <div key={`kb-${file.id || index}`} className="flex items-center justify-between p-3 border border-gray-600/50 rounded-lg hover:bg-gray-700/30">
+                              <div className="flex items-center space-x-3">
+                                <Files className="w-5 h-5 text-blue-400" />
+                                <div>
+                                  <p className="font-medium text-white">{file.filename}</p>
+                                  <p className="text-sm text-gray-400">
+                                    {formatFileSize(file.file_size || 0)} • {new Date(file.created_at).toLocaleDateString('ru-RU')}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteKnowledgeBaseFile(file.id)}
+                                className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                                title="Удалить документ"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {folders.map((folder) => {
           const IconComponent = folderIcons[folder.type];
           
           return (
-            <div
+            <Card
               key={folder.id}
               className="folder-card group cursor-pointer"
               onClick={() => handleEditFolder(folder)}
             >
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
-                  <IconComponent className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
+                    <IconComponent className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-semibold text-lg group-hover:text-blue-100 transition-colors">{folder.name}</h3>
+                    <p className="text-gray-400 text-sm mt-1">
+                      {folder.itemCount} {folder.itemCount === 1 ? 'элемент' : 'элементов'}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-white font-semibold text-lg group-hover:text-blue-100 transition-colors">{folder.name}</h3>
-                  <p className="text-gray-400 text-sm mt-1">
-                    {folder.itemCount} {folder.itemCount === 1 ? 'элемент' : 'элементов'}
-                  </p>
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-xs text-gray-500">
+                    Тип: {folder.type === 'documents' ? 'Документы' : folder.type === 'reports' ? 'Отчеты' : 'Аналитика'}
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-xs text-gray-500">
-                  Тип: {folder.type === 'documents' ? 'Документы' : folder.type === 'reports' ? 'Отчеты' : 'Аналитика'}
-                </div>
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
