@@ -35,8 +35,8 @@ interface KnowledgeBaseFile {
 }
 
 const folderIcons = {
-  documents: FileText,
-  reports: BarChart3,
+  documents: Folder,
+  reports: Folder,
   analytics: Folder,
 };
 
@@ -897,24 +897,21 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
               onClick={() => handleEditFolder(folder)}
             >
               <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
-                    <IconComponent className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
+                      <IconComponent className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-white font-semibold text-lg group-hover:text-blue-100 transition-colors">{folder.name}</h3>
+                      <p className="text-gray-400 text-sm mt-1">
+                        {folder.itemCount} {folder.itemCount === 1 ? 'элемент' : 'элементов'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-white font-semibold text-lg group-hover:text-blue-100 transition-colors">{folder.name}</h3>
-                    <p className="text-gray-400 text-sm mt-1">
-                      {folder.itemCount} {folder.itemCount === 1 ? 'элемент' : 'элементов'}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="text-xs text-gray-500">
-                    Тип: {folder.type === 'documents' ? 'Документы' : folder.type === 'reports' ? 'Отчеты' : 'Аналитика'}
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                  </div>
+                  <div className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
+                     Папка
+                   </div>
                 </div>
               </CardContent>
             </Card>
