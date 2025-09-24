@@ -52,7 +52,8 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
   const [editingFolder, setEditingFolder] = useState<DataFolder | null>(null);
   const [editFolderName, setEditFolderName] = useState('');
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
-  const [showKnowledgeBase, setShowKnowledgeBase] = useState(true);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [showKnowledgeBase, setShowKnowledgeBase] = useState(false);
   const [allKnowledgeBaseFiles, setAllKnowledgeBaseFiles] = useState<KnowledgeBaseFile[]>([]);
   const [isLoadingAllFiles, setIsLoadingAllFiles] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -244,6 +245,26 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
     }
   };
 
+  const handleDeleteFolder = async () => {
+    if (!editingFolder || !token) return;
+    
+    try {
+      await backendService.deleteFolder(editingFolder.id, token);
+      
+      setFolders(prev => prev.filter(folder => folder.id !== editingFolder.id));
+      
+      setEditingFolder(null);
+      setEditFolderName('');
+      setEditSelectedFiles([]);
+      setIsEditDialogOpen(false);
+      
+      toast.success('Папка удалена успешно');
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      toast.error('Ошибка при удалении папки');
+    }
+  };
+
   const handleEditFileSelection = (fileId: string, checked: boolean) => {
     setEditSelectedFiles(prev => 
       checked 
@@ -288,6 +309,99 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
           </h2>
           <p className="text-gray-400 text-lg">У вас пока нет папок. Создайте первую папку для начала работы</p>
         </div>
+
+        <div className="flex flex-col items-center gap-4 mb-8">
+          <Button
+            onClick={() => setShowKnowledgeBase(!showKnowledgeBase)}
+            className="button-gradient flex items-center space-x-2"
+          >
+            <Database className="h-5 w-5" />
+            <span>Загрузить документы</span>
+          </Button>
+        </div>
+
+        {showKnowledgeBase && (
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 mb-8">
+            <div className="space-y-6">
+              {/* File Upload Section */}
+              <div className="space-y-3">
+                <div className="text-sm text-gray-300">
+                  Загрузите документы для улучшения ответов ИИ
+                </div>
+                <div className="border-2 border-dashed border-gray-600/50 rounded-lg p-6 text-center">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.json,.xml,.html,.rtf,.odt"
+                    className="hidden"
+                    id="knowledge-base-upload-empty"
+                    onChange={handleKnowledgeBaseFileUpload}
+                    disabled={isUploading}
+                  />
+                  <label
+                    htmlFor="knowledge-base-upload-empty"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    <div className="text-gray-400">
+                      {isUploading ? 'Загрузка файлов...' : 'Перетащите файлы сюда или нажмите для выбора'}
+                    </div>
+                  </label>
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    disabled={isUploading}
+                    onClick={() => document.getElementById('knowledge-base-upload-empty')?.click()}
+                  >
+                    {isUploading ? 'Загружается...' : 'Выбрать файлы'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Uploaded Documents List */}
+              <div className="space-y-3">
+                <h3 className="font-medium text-white">Загруженные документы</h3>
+                <div className="border border-gray-600/50 rounded-lg">
+                  <ScrollArea className="h-48">
+                    <div className="p-4">
+                      {knowledgeBaseFiles.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400">
+                          <Files className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                          <p>Документы не найдены</p>
+                          <p className="text-sm mt-1">Загрузите документы для создания базы знаний</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {knowledgeBaseFiles.map((file, index) => (
+                            <div key={`kb-empty-${file.id || index}`} className="flex items-center justify-between p-3 border border-gray-600/50 rounded-lg hover:bg-gray-700/30">
+                              <div className="flex items-center space-x-3">
+                                <Files className="w-5 h-5 text-blue-400" />
+                                <div>
+                                  <p className="font-medium text-white">{file.filename}</p>
+                                  <p className="text-sm text-gray-400">
+                                    {formatFileSize(file.file_size || 0)} • {new Date(file.created_at).toLocaleDateString('ru-RU')}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteKnowledgeBaseFile(file.id)}
+                                className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                                title="Удалить документ"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -551,23 +665,33 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
                 </div>
               )}
             </div>
-            <div className="flex justify-end space-x-3 pt-4">
+            <div className="flex justify-between pt-4">
               <Button
                 variant="outline"
-                onClick={() => setIsEditDialogOpen(false)}
-                className="button-secondary"
+                onClick={handleDeleteFolder}
+                className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border-red-400/50"
               >
-                <X className="mr-2 h-4 w-4" />
-                Отмена
+                <Trash2 className="mr-2 h-4 w-4" />
+                Удалить папку
               </Button>
-              <Button
-                onClick={handleSaveFolder}
-                disabled={!editFolderName.trim()}
-                className="button-gradient font-medium"
-              >
-                <Save className="mr-2 h-4 w-4" />
-                Сохранить
-              </Button>
+              <div className="flex space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                  className="button-secondary"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Отмена
+                </Button>
+                <Button
+                  onClick={handleSaveFolder}
+                  disabled={!editFolderName.trim()}
+                  className="button-gradient font-medium"
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  Сохранить
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
@@ -576,7 +700,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <Button
-            onClick={() => setShowKnowledgeBase(!showKnowledgeBase)}
+            onClick={() => folders.length > 0 ? setIsUploadModalOpen(true) : setShowKnowledgeBase(!showKnowledgeBase)}
             className="button-gradient flex items-center space-x-2"
           >
             <Database className="h-5 w-5" />
@@ -584,7 +708,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
           </Button>
         </div>
         
-        {showKnowledgeBase && (
+        {folders.length === 0 && showKnowledgeBase && (
           <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
             <div className="space-y-6">
               {/* File Upload Section */}
@@ -666,7 +790,101 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
             </div>
           </div>
         )}
+
       </div>
+
+      {/* Upload Documents Modal - only when folders exist */}
+      <Dialog open={isUploadModalOpen && folders.length > 0} onOpenChange={setIsUploadModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Database className="w-5 h-5" />
+              Загрузить документы
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* File Upload Section */}
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                Загрузите документы для улучшения ответов ИИ
+              </div>
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.json,.xml,.html,.rtf,.odt"
+                  className="hidden"
+                  id="knowledge-base-upload-modal"
+                  onChange={handleKnowledgeBaseFileUpload}
+                  disabled={isUploading}
+                />
+                <label
+                  htmlFor="knowledge-base-upload-modal"
+                  className="cursor-pointer flex flex-col items-center gap-2"
+                >
+                  <Upload className="w-12 h-12 text-muted-foreground" />
+                  <div className="text-muted-foreground">
+                    {isUploading ? 'Загрузка файлов...' : 'Перетащите файлы сюда или нажмите для выбора'}
+                  </div>
+                </label>
+                <Button 
+                  variant="outline" 
+                  type="button" 
+                  disabled={isUploading}
+                  onClick={() => document.getElementById('knowledge-base-upload-modal')?.click()}
+                  className="mt-4"
+                >
+                  {isUploading ? 'Загружается...' : 'Выбрать файлы'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Uploaded Documents List */}
+            <div className="space-y-3">
+              <h3 className="font-medium">Загруженные документы</h3>
+              <div className="border rounded-lg">
+                <ScrollArea className="h-64">
+                  <div className="p-4">
+                    {knowledgeBaseFiles.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Files className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>Документы не найдены</p>
+                        <p className="text-sm mt-1">Загрузите документы для создания базы знаний</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {knowledgeBaseFiles.map((file, index) => (
+                          <div key={`kb-${file.id || index}`} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center space-x-3">
+                              <Files className="w-5 h-5 text-primary" />
+                              <div>
+                                <p className="font-medium">{file.filename}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {formatFileSize(file.file_size || 0)} • {new Date(file.created_at).toLocaleDateString('ru-RU')}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteKnowledgeBaseFile(file.id)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              title="Удалить документ"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {folders.map((folder) => {
