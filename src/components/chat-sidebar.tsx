@@ -447,7 +447,7 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat, onShowData
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteFile(file._id)}
+                          onClick={() => handleDeleteFile(file.id)}
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                         >
                           <Trash2 className="w-4 h-4" />
