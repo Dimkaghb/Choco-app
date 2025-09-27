@@ -1,3 +1,0 @@
-This is a test file for upload testing.
-Content: Hello World!
-Timestamp: 2025-01-21

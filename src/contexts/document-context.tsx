@@ -114,12 +114,10 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    console.log('Loading files for chat:', chatId);
     setIsLoadingChatFiles(true);
     try {
       // Get files for this chat from backend
       const response = await backendService.listUserFiles(authToken, chatId, 1, 100);
-      console.log('Backend response for chat files:', response);
       
       if (response.files && response.files.length > 0) {
         // Convert backend files to ProcessedDocument format
