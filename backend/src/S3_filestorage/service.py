@@ -31,13 +31,13 @@ class FileStorageService:
             file_extension = request.filename.split('.')[-1] if '.' in request.filename else ''
             file_key = f"users/{user_id}/files/{uuid.uuid4()}.{file_extension}" if file_extension else f"users/{user_id}/files/{uuid.uuid4()}"
             
-            # Generate presigned URL for upload
-            # Note: Not including ContentType in presigned URL to avoid SHA256 mismatch
+            # Generate presigned URL for upload with Content-Type
             presigned_url = s3_client.generate_presigned_url(
                 'put_object',
                 Params={
                     'Bucket': S3_BUCKET,
-                    'Key': file_key
+                    'Key': file_key,
+                    'ContentType': request.file_type
                 },
                 ExpiresIn=300  # 5 minutes
             )
@@ -50,6 +50,7 @@ class FileStorageService:
                 file_size=request.file_size,
                 user_id=user_id,
                 chat_id=request.chat_id,
+                folder_id=request.folder_id,
                 description=request.description,
                 tags=request.tags or [],
                 created_at=datetime.utcnow(),

@@ -7,10 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Folder, FileText, BarChart3, Upload, Edit2, Save, X, Database, Trash2, Files } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Plus, Folder, FileText, BarChart3, Upload, Edit2, Save, X, Trash2, Files, ChevronDown, ChevronRight, Download, Eye, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { backendService } from '@/lib/backend-service';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
 interface DataFolder {
@@ -26,13 +26,7 @@ interface DataFoldersViewProps {
   onFolderSelect?: (folderId: string) => void;
 }
 
-interface KnowledgeBaseFile {
-  id: string;
-  filename: string;
-  size: number;
-  created_at: string;
-  content_type?: string;
-}
+
 
 const folderIcons = {
   documents: Folder,
@@ -52,15 +46,16 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
   const [editingFolder, setEditingFolder] = useState<DataFolder | null>(null);
   const [editFolderName, setEditFolderName] = useState('');
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [showKnowledgeBase, setShowKnowledgeBase] = useState(false);
-  const [allKnowledgeBaseFiles, setAllKnowledgeBaseFiles] = useState<KnowledgeBaseFile[]>([]);
-  const [isLoadingAllFiles, setIsLoadingAllFiles] = useState(false);
+
+
   const [isUploading, setIsUploading] = useState(false);
-  const [knowledgeBaseFiles, setKnowledgeBaseFiles] = useState<any[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [editSelectedFiles, setEditSelectedFiles] = useState<string[]>([]);
-  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
+
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [editSelectedFiles, setEditSelectedFiles] = useState<File[]>([]);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [folderFiles, setFolderFiles] = useState<{[folderId: string]: any[]}>({});
+  const [loadingFiles, setLoadingFiles] = useState<Set<string>>(new Set());
   const { user } = useAuth();
 
   const loadFolders = async () => {
@@ -75,7 +70,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
     }
   };
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -83,120 +78,86 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleKnowledgeBaseFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0 || !token) return;
-
-    setIsUploading(true);
+  const loadFolderFiles = async (folderId: string, fileIds: string[]) => {
+    if (!token || fileIds.length === 0) return;
+    
+    setLoadingFiles(prev => new Set([...prev, folderId]));
     
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        // Upload file using S3 flow
-        const uploadedFile = await backendService.uploadFile(
-          file, 
-          token, 
-          undefined, // no chat_id for knowledge base
-          'Knowledge base document', // description
-          ['knowledge-base'] // tags
-        );
-        return uploadedFile;
+      const files = await backendService.getMultipleFileMetadata(fileIds, token);
+      setFolderFiles(prev => ({ ...prev, [folderId]: files }));
+    } catch (error) {
+      console.error('Error loading folder files:', error);
+      toast.error('Ошибка загрузки файлов папки');
+    } finally {
+      setLoadingFiles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(folderId);
+        return newSet;
       });
-
-      const uploadedFiles = await Promise.all(uploadPromises);
-      
-      // Add uploaded files to knowledge base list
-      setKnowledgeBaseFiles(prev => [...prev, ...uploadedFiles]);
-      
-      toast.success(`Загружено ${uploadedFiles.length} файл(ов) в базу знаний`);
-      
-      // Clear the input
-      event.target.value = '';
-      
-    } catch (error) {
-      console.error('Error uploading files to knowledge base:', error);
-      toast.error('Ошибка при загрузке файлов в базу знаний');
-    } finally {
-      setIsUploading(false);
     }
   };
 
-  const handleDeleteKnowledgeBaseFile = async (fileId: string) => {
-    if (!token) return;
+  const toggleFolderExpansion = async (folder: DataFolder) => {
+    const isExpanded = expandedFolders.has(folder.id);
     
-    try {
-      await backendService.deleteFile(fileId, token);
-      setKnowledgeBaseFiles(prev => prev.filter(file => file.id !== fileId));
-      toast.success('Документ удален из базы знаний');
-    } catch (error) {
-      console.error('Error deleting knowledge base file:', error);
-      toast.error('Ошибка при удалении документа');
-    }
-  };
-
-  const loadKnowledgeBaseFiles = async () => {
-    if (!token) return;
-    
-    setIsLoadingAllFiles(true);
-    try {
-      // Load files tagged as knowledge-base
-      const response = await backendService.listUserFiles(token, undefined, 1, 100);
-      const kbFiles = response.files.filter((file: any) => 
-        file.tags && file.tags.includes('knowledge-base')
-      );
-      setKnowledgeBaseFiles(kbFiles);
-      setAllKnowledgeBaseFiles(kbFiles);
-    } catch (error) {
-      console.error('Error loading knowledge base files:', error);
-    } finally {
-      setIsLoadingAllFiles(false);
-    }
-  };
-
-  const loadAllKnowledgeBaseFiles = async () => {
-    await loadKnowledgeBaseFiles();
-  };
-
-  const loadKnowledgeBaseFilesForFolders = async () => {
-    if (!token) return;
-    
-    setIsLoadingFiles(true);
-    try {
-      const response = await backendService.listUserFiles(token, undefined, 1, 100);
+    if (isExpanded) {
+      // Collapse folder
+      setExpandedFolders(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(folder.id);
+        return newSet;
+      });
+    } else {
+      // Expand folder
+      setExpandedFolders(prev => new Set([...prev, folder.id]));
       
-      if (response.files && Array.isArray(response.files)) {
-        // Показать только файлы с description "Knowledge base document"
-        const knowledgeBaseFiles: KnowledgeBaseFile[] = response.files
-          .filter((file: any) => file.description === "Knowledge base document")
-          .map((file: any) => ({
-            id: file._id || file.id,
-            filename: file.filename,
-            size: file.file_size || file.size || 0,
-            created_at: file.created_at || file.upload_date,
-            content_type: file.content_type
-          }));
-        setKnowledgeBaseFiles(knowledgeBaseFiles);
-      } else {
-        setKnowledgeBaseFiles([]);
+      // Load files if not already loaded
+      if (!folderFiles[folder.id] && folder.fileIds && folder.fileIds.length > 0) {
+        await loadFolderFiles(folder.id, folder.fileIds);
       }
-    } catch (error) {
-      console.error('Failed to load knowledge base files:', error);
-      setKnowledgeBaseFiles([]);
-    } finally {
-      setIsLoadingFiles(false);
     }
   };
+
+
+
+
+
+
+
+
 
 
 
   const handleCreateFolder = async () => {
-    if (!newFolderName.trim()) return;
+    if (!newFolderName.trim() || !token) return;
     
     try {
+      // First upload files if any are selected
+      const uploadedFileIds: string[] = [];
+      
+      if (selectedFiles.length > 0) {
+        const uploadPromises = selectedFiles.map(async (file) => {
+          const uploadedFile = await backendService.uploadFile(
+            file,
+            token,
+            undefined, // no chat_id for folder files
+            `File for folder: ${newFolderName.trim()}`,
+            ['folder-file']
+          );
+          return uploadedFile.id;
+        });
+        
+        const fileIds = await Promise.all(uploadPromises);
+        uploadedFileIds.push(...fileIds);
+      }
+      
+      // Create folder with uploaded file IDs
       const newFolder = await backendService.createFolder(
         {
           name: newFolderName.trim(),
           type: newFolderType,
-          fileIds: selectedFiles
+          fileIds: uploadedFileIds
         },
         token
       );
@@ -205,43 +166,101 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
       setNewFolderName('');
       setSelectedFiles([]);
       setIsCreateDialogOpen(false);
+      
+      toast.success(`Папка "${newFolderName.trim()}" создана успешно`);
     } catch (error) {
       console.error('Error creating folder:', error);
-      // You might want to show an error message to the user here
+      toast.error('Ошибка при создании папки');
     }
   };
 
   const handleEditFolder = (folder: DataFolder) => {
     setEditingFolder(folder);
     setEditFolderName(folder.name);
-    setEditSelectedFiles(folder.fileIds || []);
+    setEditSelectedFiles([]); // Reset to empty since we're using file input now
     setIsEditDialogOpen(true);
   };
 
   const handleSaveFolder = async () => {
-    if (!editingFolder || !editFolderName.trim()) return;
+    if (!editingFolder || !editFolderName.trim() || !token) return;
     
     try {
-      const updatedFolder = await backendService.updateFolder(
-        editingFolder.id,
-        {
-          name: editFolderName.trim(),
-          fileIds: editSelectedFiles
-        },
-        token
-      );
+      setIsUploading(true);
+      setUploadProgress({});
       
-      setFolders(prev => prev.map(folder => 
-        folder.id === editingFolder.id ? updatedFolder : folder
-      ));
+      // First upload new files if any are selected
+      const uploadedFileIds: string[] = [];
+      
+      if (editSelectedFiles.length > 0) {
+        toast.info(`Загружаем ${editSelectedFiles.length} файл(ов)...`);
+        
+        // Upload files sequentially to avoid overwhelming the server
+        for (let i = 0; i < editSelectedFiles.length; i++) {
+          const file = editSelectedFiles[i];
+          const progressKey = `${file.name}-${i}`;
+          
+          try {
+            setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
+            
+            // Use the new uploadFileToFolder method
+            const uploadedFile = await backendService.uploadFileToFolder(
+              file,
+              editingFolder.id,
+              token,
+              `File for folder: ${editFolderName.trim()}`,
+              ['folder-file']
+            );
+            
+            uploadedFileIds.push(uploadedFile.id);
+            setUploadProgress(prev => ({ ...prev, [progressKey]: 100 }));
+            
+            toast.success(`Файл "${file.name}" загружен успешно`);
+          } catch (fileError) {
+            console.error(`Error uploading file ${file.name}:`, fileError);
+            toast.error(`Ошибка загрузки файла "${file.name}"`);
+            setUploadProgress(prev => ({ ...prev, [progressKey]: -1 })); // -1 indicates error
+          }
+        }
+      }
+      
+      // Update folder name if it was changed
+      if (editFolderName.trim() !== editingFolder.name) {
+        const currentFileIds = editingFolder.fileIds || [];
+        const allFileIds = [...currentFileIds, ...uploadedFileIds];
+        
+        const updatedFolder = await backendService.updateFolder(
+          editingFolder.id,
+          {
+            name: editFolderName.trim(),
+            fileIds: allFileIds
+          },
+          token
+        );
+        
+        setFolders(prev => prev.map(folder => 
+          folder.id === editingFolder.id ? updatedFolder : folder
+        ));
+      } else {
+        // Just reload folders to get updated file counts
+        await loadFolders();
+      }
       
       setEditingFolder(null);
       setEditFolderName('');
       setEditSelectedFiles([]);
+      setUploadProgress({});
       setIsEditDialogOpen(false);
+      
+      const successMessage = uploadedFileIds.length > 0 
+        ? `Папка "${editFolderName.trim()}" обновлена и ${uploadedFileIds.length} файл(ов) загружено`
+        : `Папка "${editFolderName.trim()}" обновлена успешно`;
+      
+      toast.success(successMessage);
     } catch (error) {
       console.error('Error updating folder:', error);
-      // You might want to show an error message to the user here
+      toast.error('Ошибка при обновлении папки');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -265,37 +284,23 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
     }
   };
 
-  const handleEditFileSelection = (fileId: string, checked: boolean) => {
-    setEditSelectedFiles(prev => 
-      checked 
-        ? [...prev, fileId]
-        : prev.filter(id => id !== fileId)
-    );
+
+
+  const handleFileSelection = (files: FileList | null) => {
+    if (files) {
+      setSelectedFiles(Array.from(files));
+    }
   };
 
-  const handleFileSelection = (fileId: string, checked: boolean) => {
-    setSelectedFiles(prev => 
-      checked 
-        ? [...prev, fileId]
-        : prev.filter(id => id !== fileId)
-    );
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   useEffect(() => {
     if (token) {
       loadFolders();
-      loadAllKnowledgeBaseFiles();
-    }
-  }, [token]);
 
-  useEffect(() => {
-    if (isCreateDialogOpen || isEditDialogOpen) {
-      loadKnowledgeBaseFilesForFolders();
     }
-  }, [isCreateDialogOpen, isEditDialogOpen, user?.token]);
-
-  useEffect(() => {
-    loadKnowledgeBaseFiles();
   }, [token]);
   
 
@@ -310,98 +315,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
           <p className="text-gray-400 text-lg">У вас пока нет папок. Создайте первую папку для начала работы</p>
         </div>
 
-        <div className="flex flex-col items-center gap-4 mb-8">
-          <Button
-            onClick={() => setShowKnowledgeBase(!showKnowledgeBase)}
-            className="button-gradient flex items-center space-x-2"
-          >
-            <Database className="h-5 w-5" />
-            <span>Загрузить документы</span>
-          </Button>
-        </div>
 
-        {showKnowledgeBase && (
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 mb-8">
-            <div className="space-y-6">
-              {/* File Upload Section */}
-              <div className="space-y-3">
-                <div className="text-sm text-gray-300">
-                  Загрузите документы для улучшения ответов ИИ
-                </div>
-                <div className="border-2 border-dashed border-gray-600/50 rounded-lg p-6 text-center">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.json,.xml,.html,.rtf,.odt"
-                    className="hidden"
-                    id="knowledge-base-upload-empty"
-                    onChange={handleKnowledgeBaseFileUpload}
-                    disabled={isUploading}
-                  />
-                  <label
-                    htmlFor="knowledge-base-upload-empty"
-                    className="cursor-pointer flex flex-col items-center gap-2"
-                  >
-                    <div className="text-gray-400">
-                      {isUploading ? 'Загрузка файлов...' : 'Перетащите файлы сюда или нажмите для выбора'}
-                    </div>
-                  </label>
-                  <Button 
-                    variant="outline" 
-                    type="button" 
-                    disabled={isUploading}
-                    onClick={() => document.getElementById('knowledge-base-upload-empty')?.click()}
-                  >
-                    {isUploading ? 'Загружается...' : 'Выбрать файлы'}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Uploaded Documents List */}
-              <div className="space-y-3">
-                <h3 className="font-medium text-white">Загруженные документы</h3>
-                <div className="border border-gray-600/50 rounded-lg">
-                  <ScrollArea className="h-48">
-                    <div className="p-4">
-                      {knowledgeBaseFiles.length === 0 ? (
-                        <div className="text-center py-8 text-gray-400">
-                          <Files className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                          <p>Документы не найдены</p>
-                          <p className="text-sm mt-1">Загрузите документы для создания базы знаний</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {knowledgeBaseFiles.map((file, index) => (
-                            <div key={`kb-empty-${file.id || index}`} className="flex items-center justify-between p-3 border border-gray-600/50 rounded-lg hover:bg-gray-700/30">
-                              <div className="flex items-center space-x-3">
-                                <Files className="w-5 h-5 text-blue-400" />
-                                <div>
-                                  <p className="font-medium text-white">{file.filename}</p>
-                                  <p className="text-sm text-gray-400">
-                                    {formatFileSize(file.file_size || 0)} • {new Date(file.created_at).toLocaleDateString('ru-RU')}
-                                  </p>
-                                </div>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteKnowledgeBaseFile(file.id)}
-                                className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
-                                title="Удалить документ"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -427,51 +341,65 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
               </div>
               
               <div>
-                <Label className="text-gray-300 font-medium">Файлы из базы знаний</Label>
-                <div className="mt-3 max-h-60 overflow-y-auto checkbox-container rounded-lg">
-                  {isLoadingFiles ? (
-                    <div className="p-6 text-center text-gray-400">
-                      <div className="loading-shimmer h-4 w-32 mx-auto mb-2 rounded"></div>
-                      <p>Загрузка файлов...</p>
-                    </div>
-                  ) : knowledgeBaseFiles.length === 0 ? (
-                    <div className="p-6 text-center text-gray-400">
-                      <Upload className="mx-auto h-10 w-10 mb-3 text-gray-500" />
-                      <p className="font-medium">Загрузите файлы в базу знаний</p>
-                      <p className="text-sm text-gray-500 mt-1">Файлы будут доступны для добавления в папки</p>
-                    </div>
-                  ) : (
-                    <div className="p-3 space-y-2">
-                      <p className="text-sm text-gray-400 mb-3 font-medium">Доступные файлы в базе знаний:</p>
-                      {knowledgeBaseFiles.map((file) => (
-                        <div key={file.id} className="file-item flex items-center space-x-3 p-3 rounded-lg">
-                          <Checkbox
-                            id={file.id}
-                            checked={selectedFiles.includes(file.id)}
-                            onCheckedChange={(checked) => handleFileSelection(file.id, checked as boolean)}
-                            className="border-gray-400 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white truncate font-medium">{file.filename}</p>
-                            <p className="text-xs text-gray-400">
-                              {(file.size / 1024).toFixed(1)} KB
-                            </p>
+                <Label className="text-gray-300 font-medium">Файлы для папки</Label>
+                <div className="mt-3">
+                  <div className="border-2 border-dashed border-gray-600/50 rounded-lg p-6 text-center">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.json,.xml,.html,.rtf,.odt"
+                      className="hidden"
+                      id="folder-files-input"
+                      onChange={(e) => handleFileSelection(e.target.files)}
+                    />
+                    <label
+                      htmlFor="folder-files-input"
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                    >
+                      <Upload className="h-10 w-10 text-gray-400" />
+                      <div className="text-gray-400">
+                        Перетащите файлы сюда или нажмите для выбора
+                      </div>
+                    </label>
+                    <Button 
+                      variant="outline" 
+                      type="button" 
+                      onClick={() => document.getElementById('folder-files-input')?.click()}
+                      className="mt-3"
+                    >
+                      Выбрать файлы
+                    </Button>
+                  </div>
+                  
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-sm text-gray-400 font-medium">Выбранные файлы:</p>
+                      <div className="max-h-40 overflow-y-auto space-y-2">
+                        {selectedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-gray-700/30 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <FileText className="h-4 w-4 text-blue-400" />
+                              <div>
+                                <p className="text-sm text-white font-medium">{file.name}</p>
+                                <p className="text-xs text-gray-400">
+                                  {(file.size / 1024).toFixed(1)} KB
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeSelectedFile(index)}
+                              className="h-6 w-6 p-0 text-red-400 hover:text-red-300"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
-                {selectedFiles.length > 0 && (
-                  <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                      <span className="text-sm text-blue-400 font-medium">
-                        Выбрано файлов: {selectedFiles.length}
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <Button
@@ -530,51 +458,65 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
               </div>
               
               <div>
-                <Label className="text-gray-300 font-medium">Файлы из базы знаний</Label>
-                <div className="mt-3 max-h-60 overflow-y-auto checkbox-container rounded-lg">
-                  {isLoadingFiles ? (
-                    <div className="p-6 text-center text-gray-400">
-                      <div className="loading-shimmer h-4 w-32 mx-auto mb-2 rounded"></div>
-                      <p>Загрузка файлов...</p>
-                    </div>
-                  ) : knowledgeBaseFiles.length === 0 ? (
-                    <div className="p-6 text-center text-gray-400">
-                      <Upload className="mx-auto h-10 w-10 mb-3 text-gray-500" />
-                      <p className="font-medium">Загрузите файлы в базу знаний</p>
-                      <p className="text-sm text-gray-500 mt-1">Файлы будут доступны для добавления в папки</p>
-                    </div>
-                  ) : (
-                    <div className="p-3 space-y-2">
-                      <p className="text-sm text-gray-400 mb-3 font-medium">Доступные файлы в базе знаний:</p>
-                      {knowledgeBaseFiles.map((file) => (
-                        <div key={file.id} className="file-item flex items-center space-x-3 p-3 rounded-lg">
-                          <Checkbox
-                            id={`file-2-${file.id}`}
-                            checked={selectedFiles.includes(file.id)}
-                            onCheckedChange={(checked) => handleFileSelection(file.id, checked as boolean)}
-                            className="border-gray-400 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white truncate font-medium">{file.filename}</p>
-                            <p className="text-xs text-gray-400">
-                              {(file.size / 1024).toFixed(1)} KB
-                            </p>
+                <Label className="text-gray-300 font-medium">Файлы для папки</Label>
+                <div className="mt-3">
+                  <div className="border-2 border-dashed border-gray-600/50 rounded-lg p-6 text-center">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.json,.xml,.html,.rtf,.odt"
+                      className="hidden"
+                      id="folder-files-input-main"
+                      onChange={(e) => handleFileSelection(e.target.files)}
+                    />
+                    <label
+                      htmlFor="folder-files-input-main"
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                    >
+                      <Upload className="h-10 w-10 text-gray-400" />
+                      <div className="text-gray-400">
+                        Перетащите файлы сюда или нажмите для выбора
+                      </div>
+                    </label>
+                    <Button 
+                      variant="outline" 
+                      type="button" 
+                      onClick={() => document.getElementById('folder-files-input-main')?.click()}
+                      className="mt-3"
+                    >
+                      Выбрать файлы
+                    </Button>
+                  </div>
+                  
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-sm text-gray-400 font-medium">Выбранные файлы:</p>
+                      <div className="max-h-40 overflow-y-auto space-y-2">
+                        {selectedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-gray-700/30 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <FileText className="h-4 w-4 text-blue-400" />
+                              <div>
+                                <p className="text-sm text-white font-medium">{file.name}</p>
+                                <p className="text-xs text-gray-400">
+                                  {(file.size / 1024).toFixed(1)} KB
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeSelectedFile(index)}
+                              className="h-6 w-6 p-0 text-red-400 hover:text-red-300"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
-                {selectedFiles.length > 0 && (
-                  <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                      <span className="text-sm text-blue-400 font-medium">
-                        Выбрано файлов: {selectedFiles.length}
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <Button
@@ -619,51 +561,99 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
             </div>
             
             <div>
-              <Label className="text-gray-300 font-medium">Файлы из базы знаний</Label>
-              <div className="mt-3 max-h-60 overflow-y-auto checkbox-container rounded-lg">
-                {isLoadingFiles ? (
-                  <div className="p-6 text-center text-gray-400">
-                    <div className="loading-shimmer h-4 w-32 mx-auto mb-2 rounded"></div>
-                    <p>Загрузка файлов...</p>
-                  </div>
-                ) : knowledgeBaseFiles.length === 0 ? (
-                  <div className="p-6 text-center text-gray-400">
-                    <Upload className="mx-auto h-10 w-10 mb-3 text-gray-500" />
-                    <p className="font-medium">Загрузите файлы в базу знаний</p>
-                    <p className="text-sm text-gray-500 mt-1">Файлы будут доступны для добавления в папки</p>
-                  </div>
-                ) : (
-                  <div className="p-3 space-y-2">
-                    <p className="text-sm text-gray-400 mb-3 font-medium">Доступные файлы в базе знаний:</p>
-                    {knowledgeBaseFiles.map((file) => (
-                      <div key={file.id} className="file-item flex items-center space-x-3 p-3 rounded-lg">
-                        <Checkbox
-                          id={`edit-file-${file.id}`}
-                          checked={editSelectedFiles.includes(file.id)}
-                          onCheckedChange={(checked) => handleEditFileSelection(file.id, checked as boolean)}
-                          className="border-gray-400 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white truncate font-medium">{file.filename}</p>
-                          <p className="text-xs text-gray-400">
-                            {(file.size / 1024).toFixed(1)} KB
-                          </p>
+              <Label className="text-gray-300 font-medium">Файлы папки</Label>
+              <div className="mt-3">
+                <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-colors">
+                  <Upload className="mx-auto h-10 w-10 mb-3 text-gray-500" />
+                  <p className="text-gray-300 font-medium mb-2">Загрузите файлы в папку</p>
+                  <p className="text-sm text-gray-500 mb-4">Файлы будут добавлены в эту папку</p>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      setEditSelectedFiles(files);
+                    }}
+                    className="hidden"
+                    id="edit-file-input"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('edit-file-input')?.click()}
+                    className="button-secondary"
+                  >
+                    <Files className="mr-2 h-4 w-4" />
+                    Выбрать файлы
+                  </Button>
+                </div>
+                
+                {editSelectedFiles.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm text-gray-400 font-medium">Выбранные файлы:</p>
+                    {editSelectedFiles.map((file, index) => {
+                      const progressKey = `${file.name}-${index}`;
+                      const progress = uploadProgress[progressKey];
+                      const isUploaded = progress === 100;
+                      const hasError = progress === -1;
+                      const isUploading = progress !== undefined && progress >= 0 && progress < 100;
+                      
+                      return (
+                        <div key={index} className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <FileText className={`h-4 w-4 ${
+                                isUploaded ? 'text-green-400' : 
+                                hasError ? 'text-red-400' : 
+                                isUploading ? 'text-yellow-400' : 'text-blue-400'
+                              }`} />
+                              <div className="flex-1">
+                                <p className="text-sm text-white font-medium">{file.name}</p>
+                                <p className="text-xs text-gray-400">
+                                  {(file.size / 1024).toFixed(1)} KB
+                                  {isUploaded && <span className="ml-2 text-green-400">✓ Загружено</span>}
+                                  {hasError && <span className="ml-2 text-red-400">✗ Ошибка</span>}
+                                  {isUploading && <span className="ml-2 text-yellow-400">Загружается...</span>}
+                                </p>
+                              </div>
+                            </div>
+                            {!isUploading && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditSelectedFiles(prev => prev.filter((_, i) => i !== index));
+                                  // Clear progress for this file
+                                  setUploadProgress(prev => {
+                                    const newProgress = { ...prev };
+                                    delete newProgress[progressKey];
+                                    return newProgress;
+                                  });
+                                }}
+                                className="text-gray-400 hover:text-red-400"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          {progress !== undefined && progress >= 0 && progress < 100 && (
+                            <div className="mt-2">
+                              <div className="w-full bg-gray-700 rounded-full h-2">
+                                <div 
+                                  className="bg-blue-500 h-2 rounded-full transition-all duration-300" 
+                                  style={{ width: `${progress}%` }}
+                                ></div>
+                              </div>
+                              <p className="text-xs text-gray-400 mt-1">{progress}%</p>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
-              {editSelectedFiles.length > 0 && (
-                <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                    <span className="text-sm text-blue-400 font-medium">
-                      Выбрано файлов: {editSelectedFiles.length}
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
             <div className="flex justify-between pt-4">
               <Button
@@ -697,208 +687,26 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
         </DialogContent>
       </Dialog>
 
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            onClick={() => folders.length > 0 ? setIsUploadModalOpen(true) : setShowKnowledgeBase(!showKnowledgeBase)}
-            className="button-gradient flex items-center space-x-2"
-          >
-            <Database className="h-5 w-5" />
-            <span>Загрузить документы</span>
-          </Button>
-        </div>
-        
-        {folders.length === 0 && showKnowledgeBase && (
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
-            <div className="space-y-6">
-              {/* File Upload Section */}
-              <div className="space-y-3">
-                <div className="text-sm text-gray-300">
-                  Загрузите документы для улучшения ответов ИИ
-                </div>
-                <div className="border-2 border-dashed border-gray-600/50 rounded-lg p-6 text-center">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.json,.xml,.html,.rtf,.odt"
-                    className="hidden"
-                    id="knowledge-base-upload"
-                    onChange={handleKnowledgeBaseFileUpload}
-                    disabled={isUploading}
-                  />
-                  <label
-                    htmlFor="knowledge-base-upload"
-                    className="cursor-pointer flex flex-col items-center gap-2"
-                  >
-                    <div className="text-gray-400">
-                      {isUploading ? 'Загрузка файлов...' : 'Перетащите файлы сюда или нажмите для выбора'}
-                    </div>
-                  </label>
-                  <Button 
-                    variant="outline" 
-                    type="button" 
-                    disabled={isUploading}
-                    onClick={() => document.getElementById('knowledge-base-upload')?.click()}
-                  >
-                    {isUploading ? 'Загружается...' : 'Выбрать файлы'}
-                  </Button>
-                </div>
-              </div>
 
-              {/* Uploaded Documents List */}
-              <div className="space-y-3">
-                <h3 className="font-medium text-white">Загруженные документы</h3>
-                <div className="border border-gray-600/50 rounded-lg">
-                  <ScrollArea className="h-48">
-                    <div className="p-4">
-                      {knowledgeBaseFiles.length === 0 ? (
-                        <div className="text-center py-8 text-gray-400">
-                          <Files className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                          <p>Документы не найдены</p>
-                          <p className="text-sm mt-1">Загрузите документы для создания базы знаний</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {knowledgeBaseFiles.map((file, index) => (
-                            <div key={`kb-${file.id || index}`} className="flex items-center justify-between p-3 border border-gray-600/50 rounded-lg hover:bg-gray-700/30">
-                              <div className="flex items-center space-x-3">
-                                <Files className="w-5 h-5 text-blue-400" />
-                                <div>
-                                  <p className="font-medium text-white">{file.filename}</p>
-                                  <p className="text-sm text-gray-400">
-                                    {formatFileSize(file.file_size || 0)} • {new Date(file.created_at).toLocaleDateString('ru-RU')}
-                                  </p>
-                                </div>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteKnowledgeBaseFile(file.id)}
-                                className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
-                                title="Удалить документ"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
-      </div>
 
-      {/* Upload Documents Modal - only when folders exist */}
-      <Dialog open={isUploadModalOpen && folders.length > 0} onOpenChange={setIsUploadModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Database className="w-5 h-5" />
-              Загрузить документы
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-6">
-            {/* File Upload Section */}
-            <div className="space-y-3">
-              <div className="text-sm text-muted-foreground">
-                Загрузите документы для улучшения ответов ИИ
-              </div>
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.json,.xml,.html,.rtf,.odt"
-                  className="hidden"
-                  id="knowledge-base-upload-modal"
-                  onChange={handleKnowledgeBaseFileUpload}
-                  disabled={isUploading}
-                />
-                <label
-                  htmlFor="knowledge-base-upload-modal"
-                  className="cursor-pointer flex flex-col items-center gap-2"
-                >
-                  <Upload className="w-12 h-12 text-muted-foreground" />
-                  <div className="text-muted-foreground">
-                    {isUploading ? 'Загрузка файлов...' : 'Перетащите файлы сюда или нажмите для выбора'}
-                  </div>
-                </label>
-                <Button 
-                  variant="outline" 
-                  type="button" 
-                  disabled={isUploading}
-                  onClick={() => document.getElementById('knowledge-base-upload-modal')?.click()}
-                  className="mt-4"
-                >
-                  {isUploading ? 'Загружается...' : 'Выбрать файлы'}
-                </Button>
-              </div>
-            </div>
-
-            {/* Uploaded Documents List */}
-            <div className="space-y-3">
-              <h3 className="font-medium">Загруженные документы</h3>
-              <div className="border rounded-lg">
-                <ScrollArea className="h-64">
-                  <div className="p-4">
-                    {knowledgeBaseFiles.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Files className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        <p>Документы не найдены</p>
-                        <p className="text-sm mt-1">Загрузите документы для создания базы знаний</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {knowledgeBaseFiles.map((file, index) => (
-                          <div key={`kb-${file.id || index}`} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                            <div className="flex items-center space-x-3">
-                              <Files className="w-5 h-5 text-primary" />
-                              <div>
-                                <p className="font-medium">{file.filename}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {formatFileSize(file.file_size || 0)} • {new Date(file.created_at).toLocaleDateString('ru-RU')}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteKnowledgeBaseFile(file.id)}
-                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                              title="Удалить документ"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {folders.map((folder) => {
           const IconComponent = folderIcons[folder.type];
+          const isExpanded = expandedFolders.has(folder.id);
+          const files = folderFiles[folder.id] || [];
+          const isLoadingFiles = loadingFiles.has(folder.id);
+          const hasFiles = folder.fileIds && folder.fileIds.length > 0;
           
           return (
             <Card
               key={folder.id}
-              className="folder-card group cursor-pointer"
-              onClick={() => handleEditFolder(folder)}
+              className="folder-card group"
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-4 flex-1">
                     <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
                       <IconComponent className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
                     </div>
@@ -909,10 +717,85 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
                       </p>
                     </div>
                   </div>
-                  <div className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
-                     Папка
-                   </div>
+                  <div className="flex items-center space-x-2">
+                    {hasFiles && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFolderExpansion(folder);
+                        }}
+                        className="text-gray-400 hover:text-white p-1"
+                      >
+                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditFolder(folder);
+                      }}
+                      className="text-gray-400 hover:text-white p-1"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
+                
+                {/* File List */}
+                {isExpanded && (
+                  <div className="mt-4 border-t border-gray-700 pt-4">
+                    {isLoadingFiles ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+                        <span className="ml-2 text-gray-400 text-sm">Загрузка файлов...</span>
+                      </div>
+                    ) : files.length > 0 ? (
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-400 font-medium mb-3">Файлы в папке:</p>
+                        <ScrollArea className="max-h-48">
+                          {files.map((file) => (
+                            <div key={file.id} className="flex items-center justify-between p-2 bg-gray-800/30 rounded-lg mb-2">
+                              <div className="flex items-center space-x-3">
+                                <FileText className="h-4 w-4 text-blue-400" />
+                                <div className="flex-1">
+                                  <p className="text-sm text-white font-medium truncate max-w-[200px]" title={file.filename}>
+                                    {file.filename}
+                                  </p>
+                                  <p className="text-xs text-gray-400">
+                                    {formatFileSize(file.file_size)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(file.download_url, '_blank');
+                                  }}
+                                  className="text-gray-400 hover:text-blue-400 p-1"
+                                  title="Скачать файл"
+                                >
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </ScrollArea>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <FileText className="h-8 w-8 text-gray-500 mx-auto mb-2" />
+                        <p className="text-gray-500 text-sm">В папке нет файлов</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           );

@@ -11,6 +11,7 @@ class FileMetadataCreate(BaseModel):
     file_size: int = Field(..., description="File size in bytes")
     user_id: str = Field(..., description="ID of the user who uploaded the file")
     chat_id: Optional[str] = Field(None, description="ID of the chat session (if applicable)")
+    folder_id: Optional[str] = Field(None, description="Folder ID if uploading to a specific folder")
     description: Optional[str] = Field(None, description="Optional file description")
     tags: Optional[list[str]] = Field(default_factory=list, description="Optional tags for categorization")
 
@@ -29,6 +30,7 @@ class FileMetadataResponse(BaseModel):
     file_size: int
     user_id: str
     chat_id: Optional[str] = None
+    folder_id: Optional[str] = None
     description: Optional[str] = None
     tags: list[str] = Field(default_factory=list)
     download_url: Optional[str] = None  # Generated presigned URL
@@ -50,6 +52,7 @@ class FileMetadataInDB(BaseModel):
     file_size: int
     user_id: str
     chat_id: Optional[str] = None
+    folder_id: Optional[str] = None
     description: Optional[str] = None
     tags: list[str] = Field(default_factory=list)
     created_at: datetime
@@ -61,6 +64,7 @@ class FileUploadRequest(BaseModel):
     file_type: str = Field(..., description="MIME type of the file")
     file_size: int = Field(..., description="Size of the file in bytes")
     chat_id: Optional[str] = Field(None, description="Chat ID if uploading for a specific chat")
+    folder_id: Optional[str] = Field(None, description="Folder ID if uploading to a specific folder")
     description: Optional[str] = Field(None, description="Optional file description")
     tags: Optional[list[str]] = Field(default_factory=list, description="Optional tags")
 

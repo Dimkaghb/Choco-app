@@ -20,14 +20,16 @@ class Settings(BaseSettings):
     # CORS Configuration
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:9002",
+        "http://localhost:9003",  # Added missing port
         "http://localhost:3000",
         "http://127.0.0.1:9002",
+        "http://127.0.0.1:9003",  # Added missing port
         "http://127.0.0.1:3000",
         "http://frontend:9002",  # Docker container name
         "http://choco-frontend:9002",  # Docker container name from compose
         "http://freedom-analysis.chocodev.kz:9002",  # Production frontend
-        "https://freedom-analysis.chocodev.kz:9002"
-        "*"  # Production frontend HTTPS
+        "https://freedom-analysis.chocodev.kz:9002",  # Fixed missing comma
+        "*"  # Allow all origins as fallback
     ]
     
     # File Processing Configuration
