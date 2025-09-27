@@ -21,16 +21,16 @@ export function ChatHeader({ currentChat }: ChatHeaderProps) {
   };
 
   return (
-    <div className="flex items-center justify-between p-2 sm:p-3 md:p-4 border-b border-border">
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+    <div className="flex items-center justify-between p-1.5 sm:p-2 md:p-3 border-b border-border">
+      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+        <Avatar className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0">
           <AvatarFallback>AI</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="font-bold text-base sm:text-lg font-headline truncate">
+          <p className="font-bold text-sm sm:text-base font-headline truncate">
             {currentChat ? currentChat.title : 'Freedom AI Analysis Помощник'}
           </p>
-          <p className="text-xs sm:text-sm text-muted-foreground truncate">
+          <p className="text-xs text-muted-foreground truncate">
             {currentChat 
               ? `Создан ${formatDate(currentChat.created_at.toString())}`
               : 'Онлайн'
@@ -38,8 +38,8 @@ export function ChatHeader({ currentChat }: ChatHeaderProps) {
           </p>
         </div>
       </div>
-      <Button variant="ghost" size="icon" className="flex-shrink-0">
-        <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+      <Button variant="ghost" size="icon" className="flex-shrink-0 h-7 w-7">
+        <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
       </Button>
     </div>
   );

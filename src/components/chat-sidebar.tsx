@@ -220,45 +220,45 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat, onShowData
   };
 
   return (
-    <div className="flex flex-col h-full w-64 min-w-64 max-w-64 p-3 bg-background/50 border-r border-border">
-      <div className="flex justify-between items-center pb-3 border-b border-border">
-        <h1 className="text-lg font-bold font-headline truncate flex-1 mr-2">Freedom AI Analysis</h1>
-        <Button variant="ghost" size="icon" onClick={handleCreateChat} className="flex-shrink-0">
-          <Plus className="w-4 h-4" />
+    <div className="flex flex-col h-full w-52 min-w-52 max-w-52 p-2 bg-background/50 border-r border-border">
+      <div className="flex justify-between items-center pb-2 border-b border-border">
+        <h1 className="text-sm font-bold font-headline truncate flex-1 mr-2">Freedom AI Analysis</h1>
+        <Button variant="ghost" size="icon" onClick={handleCreateChat} className="flex-shrink-0 h-7 w-7">
+          <Plus className="w-3 h-3" />
         </Button>
       </div>
       
-      <div className="relative mt-3">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <div className="relative mt-2">
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
         <Input 
           placeholder="Поиск чатов..." 
-          className="pl-10" 
+          className="pl-8 h-7 text-xs" 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
       
       {/* Knowledge Base Section */}
-      <div className="mt-3 mb-3">
+      <div className="mt-2 mb-2">
         <Button 
           variant="outline" 
-          className="w-full justify-start gap-2 h-9 text-sm"
+          className="w-full justify-start gap-2 h-7 text-xs"
           onClick={onShowDataFolders}
         >
-          <Database className="w-4 h-4" />
+          <Database className="w-3 h-3" />
           База знаний
         </Button>
       </div>
       
       <ScrollArea className="flex-1">
         {isLoading ? (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-10 bg-muted/50 rounded-lg animate-pulse" />
+              <div key={i} className="h-8 bg-muted/50 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : filteredChats.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center mt-6">
+          <p className="text-xs text-muted-foreground text-center mt-4">
             {searchQuery ? 'Чаты не найдены' : 'Нет недавних чатов'}
           </p>
         ) : (
@@ -267,14 +267,14 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat, onShowData
               <div
                 key={chat.id}
                 className={cn(
-                  "group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
+                  "group flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
                   currentChatId === chat.id && "bg-muted"
                 )}
                 onClick={() => onChatSelect(chat.id)}
               >
-                <div className="flex items-center space-x-2 flex-1 min-w-0 overflow-hidden pr-2">
-                  <MessageSquare className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 min-w-0 overflow-hidden max-w-[160px]">
+                <div className="flex items-center space-x-1.5 flex-1 min-w-0 overflow-hidden pr-1.5">
+                  <MessageSquare className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0" />
+                  <div className="flex-1 min-w-0 overflow-hidden max-w-[128px]">
                     {editingChatId === chat.id ? (
                       <Input
                         value={editTitle}
@@ -287,13 +287,13 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat, onShowData
                             setEditingChatId(null);
                           }
                         }}
-                        className="h-5 text-xs w-full"
+                        className="h-4 text-xs w-full"
                         autoFocus
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
                       <>
-                        <p className="text-sm font-medium truncate w-full" title={chat.title}>{chat.title}</p>
+                        <p className="text-xs font-medium truncate w-full" title={chat.title}>{chat.title}</p>
                         <p className="text-xs text-muted-foreground truncate">
                           {formatDate(chat.updated_at.toString())}
                         </p>
@@ -307,22 +307,22 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat, onShowData
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1"
+                      className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <MoreHorizontal className="w-3 h-3" />
+                      <MoreHorizontal className="w-2.5 h-2.5" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={(e) => startEditing(chat, e)}>
-                      <Edit2 className="w-3 h-3 mr-2" />
+                      <Edit2 className="w-2.5 h-2.5 mr-1.5" />
                       Переименовать
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={(e) => handleDeleteChat(chat.id, e)}
                       className="text-destructive"
                     >
-                      <Trash2 className="w-3 h-3 mr-2" />
+                      <Trash2 className="w-2.5 h-2.5 mr-1.5" />
                       Удалить
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -333,7 +333,7 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat, onShowData
         )}
       </ScrollArea>
       
-      <div className="pt-3 border-t border-border space-y-2">
+      <div className="pt-2 border-t border-border space-y-1.5">
         <p className="text-xs text-muted-foreground text-center">
           {filteredChats.length} {filteredChats.length === 1 ? 'чат' : 'чатов'}
         </p>
@@ -341,11 +341,11 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat, onShowData
         {/* User info and logout */}
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
-            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <User className="w-3 h-3 text-primary" />
+            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <User className="w-2.5 h-2.5 text-primary" />
             </div>
             <div className="min-w-0 flex-1 overflow-hidden">
-              <p className="text-sm font-medium truncate" title={user?.email || 'Пользователь'}>
+              <p className="text-xs font-medium truncate" title={user?.email || 'Пользователь'}>
                 {user?.email || 'Пользователь'}
               </p>
             </div>
@@ -353,19 +353,19 @@ export function ChatSidebar({ currentChatId, onChatSelect, onNewChat, onShowData
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                <MoreHorizontal className="w-3 h-3" />
+              <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                <MoreHorizontal className="w-2.5 h-2.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleShowAllFiles}>
-                <Files className="w-3 h-3 mr-2" />
+                <Files className="w-2.5 h-2.5 mr-1.5" />
                 Мои файлы
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info(`Всего файлов: ${filesStats.totalFiles}\nОбщий размер: ${formatFileSize(filesStats.totalSize)}`)}>                <Database className="w-3 h-3 mr-2" />                Статистика данных              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info(`Всего файлов: ${filesStats.totalFiles}\nОбщий размер: ${formatFileSize(filesStats.totalSize)}`)}>                <Database className="w-2.5 h-2.5 mr-1.5" />                Статистика данных              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-destructive">
-                <LogOut className="w-3 h-3 mr-2" />
+                <LogOut className="w-2.5 h-2.5 mr-1.5" />
                 Выйти
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -14,30 +14,32 @@ interface ChatMessageProps {
   isLoading?: boolean;
 }
 
+
+
 export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
   const isUser = message.role === "user";
 
   return (
     <div
       className={cn(
-        "flex items-start gap-2 w-full",
+        "flex items-start gap-1.5 sm:gap-2 w-full",
         isUser ? "flex-row-reverse" : "flex-row"
       )}
     >
-      <Avatar className="h-6 w-6">
+      <Avatar className="h-5 w-5 sm:h-6 sm:w-6">
         <AvatarFallback>
-          {isUser ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3" />}
+          {isUser ? <User className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <Bot className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
         </AvatarFallback>
       </Avatar>
       <div
         className={cn(
-          "flex flex-col gap-1 max-w-[85%] sm:max-w-[80%] md:max-w-[75%] animate-in fade-in duration-300 min-w-0",
+          "flex flex-col gap-0.5 sm:gap-1 max-w-[85%] sm:max-w-[80%] md:max-w-[75%] animate-in fade-in duration-300 min-w-0",
           isUser ? "items-end" : "items-start"
         )}
       >
         <div
           className={cn(
-            "p-2 sm:p-3 rounded-lg break-words overflow-hidden",
+            "p-1.5 sm:p-2 rounded-lg break-words overflow-hidden",
             isUser
               ? "bg-primary text-primary-foreground rounded-br-none"
               : "bg-secondary text-secondary-foreground rounded-bl-none"
@@ -45,10 +47,10 @@ export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
         >
           {/* Display file attachments */}
           {message.attachments && message.attachments.length > 0 && (
-            <div className="mb-2">
+            <div className="mb-1.5">
               <FileAttachmentList 
                 attachments={message.attachments} 
-                size="md"
+                size="sm"
                 maxDisplay={4}
               />
             </div>
@@ -56,47 +58,47 @@ export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
           
           {/* Legacy image support for backward compatibility */}
           {message.image && (!message.attachments || message.attachments.length === 0) && (
-            <div className="mb-2 rounded-md overflow-hidden">
+            <div className="mb-1.5 rounded-md overflow-hidden">
               <Image
                 src={message.image}
                 alt="User uploaded image"
-                width={300}
-                height={200}
+                width={240}
+                height={160}
                 className="object-cover"
                 data-ai-hint="user image"
               />
             </div>
           )}
           {isLoading ? (
-            <div className="flex items-center gap-1.5">
-              <Skeleton className="h-3 w-3 rounded-full bg-current" />
-              <Skeleton className="h-3 w-3 rounded-full bg-current animate-delay-150" />
-              <Skeleton className="h-3 w-3 rounded-full bg-current animate-delay-300" />
+            <div className="flex items-center gap-1">
+              <Skeleton className="h-2.5 w-2.5 rounded-full bg-current" />
+              <Skeleton className="h-2.5 w-2.5 rounded-full bg-current animate-delay-150" />
+              <Skeleton className="h-2.5 w-2.5 rounded-full bg-current animate-delay-300" />
             </div>
           ) : (
             <>
-              <p className="text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">
+              <p className="text-xs sm:text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">
                 {message.content}
               </p>
               {message.visualization?.enabled && message.visualization.chartData && (
-                <div className="mt-4 w-full overflow-hidden">
+                <div className="mt-3 w-full overflow-hidden">
                   <D3Visualization 
                     chartData={message.visualization.chartData}
-                    className="rounded-md border bg-background p-2 sm:p-4 max-w-full overflow-auto"
+                    className="rounded-md border bg-background p-1.5 sm:p-3 max-w-full overflow-auto"
                   />
                 </div>
               )}
               {message.plotlyChart && (
-                <div className="mt-4 w-full overflow-hidden">
+                <div className="mt-3 w-full overflow-hidden">
                   <PlotlyChart 
                     data={message.plotlyChart.data}
                     type={message.plotlyChart.type}
                     title={message.plotlyChart.title}
-                    className="rounded-md border bg-background p-2 sm:p-4 max-w-full overflow-auto"
+                    className="rounded-md border bg-background p-1.5 sm:p-3 max-w-full overflow-auto"
                   />
                   {message.plotlyChart.comment && (
-                    <div className="mt-2 px-2 sm:px-4">
-                      <p className="text-sm text-muted-foreground italic">
+                    <div className="mt-1.5 px-1.5 sm:px-3">
+                      <p className="text-xs text-muted-foreground italic">
                         {message.plotlyChart.comment}
                       </p>
                     </div>
@@ -104,18 +106,18 @@ export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
                 </div>
               )}
               {message.charts && message.charts.length > 0 && (
-                <div className="mt-4 w-full overflow-hidden space-y-4">
+                <div className="mt-3 w-full overflow-hidden space-y-3">
                   {message.charts.map((chart, index) => (
                     <div key={index} className="w-full">
                       <PlotlyChart 
                         data={chart.data}
                         type={chart.type}
                         title={chart.title}
-                        className="rounded-md border bg-background p-2 sm:p-4 max-w-full overflow-auto"
+                        className="rounded-md border bg-background p-1.5 sm:p-3 max-w-full overflow-auto"
                       />
                       {chart.comment && (
-                        <div className="mt-2 px-2 sm:px-4">
-                          <p className="text-sm text-muted-foreground italic">
+                        <div className="mt-1.5 px-1.5 sm:px-3">
+                          <p className="text-xs text-muted-foreground italic">
                             {chart.comment}
                           </p>
                         </div>
@@ -128,7 +130,7 @@ export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
           )}
         </div>
         {!isLoading && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             {format(message.timestamp, "h:mm a")}
           </p>
         )}

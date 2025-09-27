@@ -108,13 +108,13 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
   };
 
   return (
-    <div className="p-2 sm:p-3 md:p-4 border-t border-border bg-background">
+    <div className="p-1.5 sm:p-2 md:p-3 border-t border-border bg-background">
       <form ref={formRef} onSubmit={handleSubmit} className="relative">
         {/* File attachments preview */}
         {attachments.length > 0 && (
-          <div className="mb-2">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">
+          <div className="mb-1.5">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-muted-foreground">
                 Прикрепленные файлы ({attachments.length})
               </span>
               <Button
@@ -122,7 +122,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
                 variant="ghost"
                 size="sm"
                 onClick={clearAllAttachments}
-                className="text-xs"
+                className="text-xs h-6"
               >
                 Очистить все
               </Button>
@@ -139,7 +139,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
         <Textarea
           name="prompt"
           placeholder="Спросите Freedom AI Analysis..."
-          className="pr-16 sm:pr-20 md:pr-22 min-h-[38px] sm:min-h-[42px] resize-none text-sm sm:text-base"
+          className="pr-12 sm:pr-16 md:pr-18 min-h-[30px] sm:min-h-[34px] resize-none text-xs sm:text-sm"
           rows={1}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -149,7 +149,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
           }}
           disabled={isLoading}
         />
-        <div className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 sm:gap-1">
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
           <input
             type="file"
             name="files"
@@ -168,11 +168,12 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
             title="Прикрепить файлы"
+            className="h-6 w-6"
           >
-            <Paperclip className="w-4 h-4" />
+            <Paperclip className="w-3 h-3" />
           </Button>
-          <Button type="submit" size="icon" disabled={isLoading}>
-            <Send className="w-4 h-4" />
+          <Button type="submit" size="icon" disabled={isLoading} className="h-6 w-6">
+            <Send className="w-3 h-3" />
           </Button>
         </div>
       </form>
