@@ -706,15 +706,16 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
               key={folder.id}
               className="folder-card group "
             >
-              <CardContent className="p-6"> 
-                <div className="flex items-center justify-between mb-4 ">
-                  <div className="flex items-center space-x-4 flex-1">
-                    <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
-                      <IconComponent className="h-4 w-4 text-blue-400 group-hover:text-blue-300 transition-colors" />
+              <CardContent className="p-3"> 
+                <div className="inline-block px-2 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-md mb-3">Папка</div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <div className="p-2 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
+                      <IconComponent className="h-5 w-5 text-blue-400 group-hover:text-blue-300 transition-colors" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-white font-semibold text-l group-hover:text-blue-100 transition-colors">{folder.name}</h3>
-                      <p className="text-gray-400 text-sm mt-1">
+                      <h3 className="text-white font-semibold text-base group-hover:text-blue-100 transition-colors">{folder.name}</h3>
+                      <p className="text-gray-400 text-sm mt-0.5">
                         {folder.itemCount} {folder.itemCount === 1 ? 'элемент' : 'элементов'}
                       </p>
                     </div>
