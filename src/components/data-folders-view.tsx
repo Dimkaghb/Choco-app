@@ -326,7 +326,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
           </DialogTrigger>
           <DialogContent className="dialog-glass">
             <DialogHeader>
-              <DialogTitle className="text-white text-xl font-semibold">Создать новую папку</DialogTitle>
+              <DialogTitle className="text-white text-sm font-semibold">Создать новую папку</DialogTitle>
             </DialogHeader>
             <div className="space-y-6 pt-4">
               <div>
@@ -337,6 +337,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Введите название папки"
                   className="input-glass text-white placeholder-gray-400 mt-2"
+                  autoComplete="off"
                 />
               </div>
               
@@ -427,38 +428,39 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
   return (
     <div className="p-6 max-h-screen overflow-y-auto">
       <div className="mb-8 text-center">
-        <h2 className="text-3xl font-bold text-white mb-3">
+        <h2 className="text-xl font-bold text-white mb-3">
           Ваши <span className="text-gradient">папки с данными</span>
         </h2>
-        <p className="text-gray-400 text-lg">Управляйте своими данными и документами</p>
+        <p className="text-gray-400 text-sm">Управляйте своими данными и документами</p>  
       </div>
 
       <div className="flex justify-center mb-8">
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button className="button-gradient font-medium">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 h-3 w-3" />
               Создать папку
             </Button>
           </DialogTrigger>
           <DialogContent className="dialog-glass">
             <DialogHeader>
-              <DialogTitle className="text-white text-xl font-semibold">Создать новую папку</DialogTitle>
+              <DialogTitle className="text-white text-s font-semibold">Создать новую папку</DialogTitle>
             </DialogHeader>
             <div className="space-y-6 pt-4">
               <div>
-                <Label htmlFor="folder-name-main" className="text-gray-300 font-medium">Название папки</Label>
+                <Label htmlFor="folder-name-main" className="text-gray-300 text-sm font-medium">Название папки</Label>
                 <Input
                   id="folder-name-main"
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Введите название папки"
                   className="input-glass text-white placeholder-gray-400 mt-2"
+                  autoComplete="off"
                 />
               </div>
               
               <div>
-                <Label className="text-gray-300 font-medium">Файлы для папки</Label>
+                <Label className="text-gray-300 text-sm font-medium">Файлы для папки</Label>
                 <div className="mt-3">
                   <div className="border-2 border-dashed border-gray-600/50 rounded-lg p-6 text-center">
                     <input
@@ -474,7 +476,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
                       className="cursor-pointer flex flex-col items-center gap-2"
                     >
                       <Upload className="h-10 w-10 text-gray-400" />
-                      <div className="text-gray-400">
+                      <div className="text-gray-400 text-sm">
                         Перетащите файлы сюда или нажмите для выбора
                       </div>
                     </label>
@@ -482,7 +484,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
                       variant="outline" 
                       type="button" 
                       onClick={() => document.getElementById('folder-files-input-main')?.click()}
-                      className="mt-3"
+                      className="mt-3 text-sm"
                     >
                       Выбрать файлы
                     </Button>
@@ -495,7 +497,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
                         {selectedFiles.map((file, index) => (
                           <div key={index} className="flex items-center justify-between p-2 bg-gray-700/30 rounded-lg">
                             <div className="flex items-center space-x-2">
-                              <FileText className="h-4 w-4 text-blue-400" />
+                              <FileText className="h-3 w-3 text-blue-400" />
                               <div>
                                 <p className="text-sm text-white font-medium">{file.name}</p>
                                 <p className="text-xs text-gray-400">
@@ -543,29 +545,29 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="dialog-glass max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white text-xl font-semibold flex items-center">
-              <Edit2 className="mr-2 h-5 w-5" />
+            <DialogTitle className="text-white text-sm font-semibold flex items-center">
+              <Edit2 className="mr-2 h-4 w-4" />
               Редактировать папку
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-6 pt-4">
             <div>
-              <Label htmlFor="edit-folder-name" className="text-gray-300 font-medium">Название папки</Label>
+              <Label htmlFor="edit-folder-name" className="text-gray-300 text-sm font-medium">Название папки</Label>
               <Input
                 id="edit-folder-name"
                 value={editFolderName}
                 onChange={(e) => setEditFolderName(e.target.value)}
                 placeholder="Введите название папки"
-                className="input-glass text-white placeholder-gray-400 mt-2"
+                className="input-glass text-white placeholder-gray-400 mt-2 text-sm"
               />
             </div>
             
             <div>
-              <Label className="text-gray-300 font-medium">Файлы папки</Label>
+              <Label htmlFor="edit-folder-files" className="text-gray-300 text-sm font-medium">Файлы папки</Label>
               <div className="mt-3">
                 <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-colors">
                   <Upload className="mx-auto h-10 w-10 mb-3 text-gray-500" />
-                  <p className="text-gray-300 font-medium mb-2">Загрузите файлы в папку</p>
+                  <p className="text-gray-300 text-sm font-medium mb-2">Загрузите файлы в папку</p>
                   <p className="text-sm text-gray-500 mb-4">Файлы будут добавлены в эту папку</p>
                   <input
                     type="file"
@@ -583,7 +585,7 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
                     onClick={() => document.getElementById('edit-file-input')?.click()}
                     className="button-secondary"
                   >
-                    <Files className="mr-2 h-4 w-4" />
+                    <Files className="mr-2 h-3 w-3" />
                     Выбрать файлы
                   </Button>
                 </div>
@@ -702,16 +704,16 @@ export function DataFoldersView({ onFolderSelect }: DataFoldersViewProps) {
           return (
             <Card
               key={folder.id}
-              className="folder-card group"
+              className="folder-card group "
             >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
+              <CardContent className="p-6"> 
+                <div className="flex items-center justify-between mb-4 ">
                   <div className="flex items-center space-x-4 flex-1">
                     <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
-                      <IconComponent className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                      <IconComponent className="h-4 w-4 text-blue-400 group-hover:text-blue-300 transition-colors" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-white font-semibold text-lg group-hover:text-blue-100 transition-colors">{folder.name}</h3>
+                      <h3 className="text-white font-semibold text-l group-hover:text-blue-100 transition-colors">{folder.name}</h3>
                       <p className="text-gray-400 text-sm mt-1">
                         {folder.itemCount} {folder.itemCount === 1 ? 'элемент' : 'элементов'}
                       </p>

@@ -164,7 +164,7 @@ export function ContextSidebar({ onCollapseChange }: ContextSidebarProps) {
                     showSource={true}
                     showProcessingStatus={true}
                     isEditable={true}
-                    size="xs"
+                      size="sm"
                   />
                   {currentChatDocuments.length === 0 && (
                     <div className="text-center py-5 text-muted-foreground text-[10px]">
